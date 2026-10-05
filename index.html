@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050805">
+<meta name="description" content="GHOST//SHELL – ein kleines Hacking-Puzzle im Terminal-Look. Rein fiktiv, spielbar im Browser.">
+<title>GHOST//SHELL</title>
+<style>
+:root {
+  --bg: #050805;
+  --panel: #0a110b;
+  --fg: #38ff7a;
+  --dim: #6fbf8a;
+  --faint: #2b5a3b;
+  --err: #ff6b6b;
+  --warn: #ffd166;
+  --info: #6bd6ff;
+  --ok: #b9ff66;
+  --font: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.45;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.18) 3px);
+}
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--faint);
+  font-size: 13px;
+}
+.logo { font-weight: bold; letter-spacing: .08em; text-shadow: 0 0 8px rgba(56,255,122,.6); }
+.progress { color: var(--dim); white-space: nowrap; }
+.progress .done { color: var(--ok); }
+#out {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 14px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+#out div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.45em; }
+.cmd  { color: var(--dim); }
+.dim  { color: var(--dim); }
+.err  { color: var(--err); }
+.warn { color: var(--warn); }
+.info { color: var(--info); }
+.ok   { color: var(--ok); font-weight: bold; }
+.head { color: var(--fg); font-weight: bold; text-shadow: 0 0 8px rgba(56,255,122,.5); }
+.logline { font-size: 12.5px; }
+.cipher { color: var(--warn); letter-spacing: .04em; }
+footer {
+  background: var(--panel);
+  border-top: 1px solid var(--faint);
+  padding: 8px 10px 10px;
+}
+#chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 14px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.chip:active { background: var(--faint); }
+.chip:disabled { color: var(--faint); cursor: not-allowed; }
+.chip:focus-visible, #in:focus-visible, #go:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
+form { display: flex; align-items: center; gap: 8px; }
+#prompt { color: var(--dim); white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+#in {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  font: inherit;
+  font-size: 16px; /* verhindert Auto-Zoom auf iOS */
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+  padding: 0 10px;
+  caret-color: var(--fg);
+}
+#go {
+  min-height: 44px;
+  min-width: 44px;
+  font: inherit;
+  font-weight: bold;
+  color: var(--bg);
+  background: var(--fg);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .head { animation: glow 3s ease-in-out infinite alternate; }
+  @keyframes glow { from { text-shadow: 0 0 4px rgba(56,255,122,.3); } to { text-shadow: 0 0 10px rgba(56,255,122,.7); } }
+}
+@media (min-width: 700px) {
+  body { font-size: 16px; }
+  #out, header, footer { width: min(900px, 100%); margin: 0 auto; }
+  header { border-left: 1px solid var(--faint); border-right: 1px solid var(--faint); }
+  footer { border-left: 1px solid var(--faint); border-right: 1px solid var(--faint); }
+}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">GHOST//SHELL</span>
+  <span class="progress" id="progress" aria-label="Fortschritt"></span>
+</header>
+<main id="out" role="log" aria-live="polite" aria-label="Terminal-Ausgabe"></main>
+<footer>
+  <div id="chips" aria-label="Schnellbefehle"></div>
+  <form id="form" autocomplete="off">
+    <span id="prompt" aria-hidden="true">$</span>
+    <input id="in" type="text" inputmode="text" enterkeyhint="send"
+           autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
+           aria-label="Befehl eingeben" placeholder="Befehl eingeben …">
+    <button id="go" type="submit" aria-label="Senden">&#9166;</button>
+  </form>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------- Spieldaten (komplett fiktiv) ---------- */
+
+  var STORE_KEY = 'ghostshell.v1';
+  var LEVEL_COUNT = 3;
+  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling'];
+
+  // Level 1
+  var L1_PASSWORD = 'waldi1984';
+  var L1_FILES = {
+    'notiz.txt': [
+      'Haftnotiz am Monitor (abfotografiert):',
+      '',
+      '  "Passwort = Name vom HUND + Geburtsjahr,',
+      '   alles klein, ohne Leerzeichen.',
+      '   Sonst vergesse ich es wieder!"',
+      '',
+      '                        -- M. Falke'
+    ],
+    'profil.txt': [
+      'MITARBEITERPROFIL  //  Konto: mfalke',
+      '------------------------------------',
+      'Name ........... Marta Falke',
+      'Abteilung ...... Archiv',
+      'Geboren ........ 12.03.1984',
+      'Hobby .......... Segeln (Boot: "Möwe")',
+      'Lieblingsstadt . Kiel',
+      'Eingestellt .... 2009'
+    ],
+    'chat.log': [
+      '[Teamchat, Auszug]',
+      'jonas: Marta, bringst du morgen den Kater mit ins Büro?',
+      'marta: Mimi bleibt zuhause, die hasst Autofahren.',
+      'marta: Waldi dagegen kommt mit, der liebt das Büro :D',
+      'jonas: Dein Dackel ist der Chef hier.',
+      'marta: Er hat gestern wieder meine Socken geklaut!'
+    ]
+  };
+
+  // Level 2
+  var L2_SHIFT = 7;
+  var L2_PLAIN = 'DER ZUGANGSCODE LAUTET MORGENROT UM MITTERNACHT AM ALTEN LEUCHTTURM';
+  var L2_ANSWER = 'MORGENROT';
+
+  // Level 3 (IPs stammen aus den für Dokumentation reservierten Bereichen, RFC 5737)
+  var L3_LOG = [
+    '07:58:03 192.168.4.21 LOGIN ERFOLG user=anna',
+    '08:02:47 192.168.4.35 LOGIN ERFOLG user=ben',
+    '08:10:15 192.168.4.21 DATEI LESEN bericht_q3.pdf',
+    '08:12:30 192.168.4.21 DOWNLOAD bericht_q3.pdf 2MB',
+    '08:14:22 198.51.100.23 LOGIN FEHLER user=ben',
+    '08:14:51 198.51.100.23 LOGIN FEHLER user=ben',
+    '08:15:20 198.51.100.23 LOGIN ERFOLG user=ben',
+    '08:16:02 198.51.100.23 DATEI LESEN urlaubsplan.xlsx',
+    '08:31:09 192.0.2.77 LOGIN FEHLER user=root',
+    '08:31:11 192.0.2.77 LOGIN FEHLER user=root',
+    '08:31:13 192.0.2.77 LOGIN FEHLER user=root',
+    '08:31:15 192.0.2.77 LOGIN FEHLER user=root',
+    '08:31:17 192.0.2.77 LOGIN FEHLER user=root',
+    '08:31:19 192.0.2.77 SPERRE root 30min',
+    '09:12:40 192.168.4.35 DATEI SCHREIBEN notizen.txt',
+    '09:47:05 203.0.113.66 LOGIN FEHLER user=admin',
+    '09:47:09 203.0.113.66 LOGIN FEHLER user=admin',
+    '09:47:14 203.0.113.66 LOGIN FEHLER user=admin',
+    '09:47:20 203.0.113.66 LOGIN ERFOLG user=admin',
+    '09:48:01 203.0.113.66 DATEI LESEN geheim_plaene.zip',
+    '09:48:33 203.0.113.66 DOWNLOAD geheim_plaene.zip 48MB',
+    '09:49:10 203.0.113.66 LOG LÖSCHEN auth.log (Auszug)',
+    '10:05:31 192.168.4.21 LOGOUT user=anna'
+  ];
+  var L3_ANSWER = '203.0.113.66';
+
+  var HINTS = {
+    1: [
+      'Schau dir alle Dateien an. Eine davon verrät die Regel für das Passwort.',
+      'Die Regel steht in notiz.txt. Welche Angaben aus profil.txt und chat.log brauchst du dafür?',
+      'Gesucht: der Hund (nicht die Katze!) und das Geburtsjahr. Alles klein, ohne Leerzeichen.'
+    ],
+    2: [
+      'Eine Caesar-Chiffre verschiebt jeden Buchstaben um die gleiche Anzahl im Alphabet.',
+      'Probiere mit "shift <zahl>" verschiedene Verschiebungen. Tipp: "analyse" zeigt die häufigsten Buchstaben. Im Deutschen ist E am häufigsten.',
+      'Die Verschiebung liegt zwischen 1 und 25. Im Klartext steht ein Codewort nach "ZUGANGSCODE LAUTET".'
+    ],
+    3: [
+      'Ein Eindringling versucht oft mehrmals, sich einzuloggen, bevor es klappt.',
+      'Aber nicht jeder mit Fehlversuchen ist böse. Wer hat danach Daten heruntergeladen UND Spuren verwischt?',
+      'Nutze "suche download" und "suche lösch" und vergleiche die IP-Adressen.'
+    ]
+  };
+
+  /* ---------- Zustand & Speicher ---------- */
+
+  var state = { solved: [false, false, false], level: 0 };
+  var hintCount = { 1: 0, 2: 0, 3: 0 };
+  var resetPending = false;
+
+  function loadProgress() {
+    try {
+      var raw = window.localStorage.getItem(STORE_KEY);
+      if (!raw) { return false; }
+      var data = JSON.parse(raw);
+      if (data && Array.isArray(data.solved) && data.solved.length === LEVEL_COUNT) {
+        state.solved = data.solved.map(function (v) { return v === true; });
+        return state.solved.some(Boolean);
+      }
+    } catch (e) { /* Speicher nicht verfügbar oder defekt: ohne Speicherstand weiterspielen */ }
+    return false;
+  }
+
+  function saveProgress() {
+    try {
+      window.localStorage.setItem(STORE_KEY, JSON.stringify({ solved: state.solved }));
+    } catch (e) { /* Speichern nicht möglich, das Spiel läuft trotzdem */ }
+  }
+
+  function clearProgress() {
+    try { window.localStorage.removeItem(STORE_KEY); } catch (e) { /* ignorieren */ }
+  }
+
+  /* ---------- Ausgabe ---------- */
+
+  var out = document.getElementById('out');
+  var input = document.getElementById('in');
+  var chipsEl = document.getElementById('chips');
+  var promptEl = document.getElementById('prompt');
+  var progressEl = document.getElementById('progress');
+
+  var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var LINE_DELAY = reduceMotion ? 0 : 12;
+  var queue = [];
+  var pumping = false;
+
+  function print(text, cls) {
+    String(text).split('\n').forEach(function (line) { queue.push({ text: line, cls: cls || '' }); });
+    if (!pumping) { pumping = true; step(); }
+  }
+
+  function step() {
+    var item = queue.shift();
+    if (!item) { pumping = false; return; }
+    var div = document.createElement('div');
+    if (item.cls) { div.className = item.cls; }
+    div.textContent = item.text;
+    out.appendChild(div);
+    out.scrollTop = out.scrollHeight;
+    if (LINE_DELAY) { setTimeout(step, LINE_DELAY); } else { step(); }
+  }
+
+  function printAll(lines, cls) { lines.forEach(function (l) { print(l, cls); }); }
+
+  /* ---------- Oberfläche: Prompt, Fortschritt, Chips ---------- */
+
+  function hostName() {
+    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway'][state.level];
+  }
+
+  function renderStatus() {
+    promptEl.textContent = hostName() + ':~$';
+    var dots = state.solved.map(function (s, i) {
+      return s ? '<span class="done">[' + (i + 1) + ']</span>' : '[' + (i + 1) + ']';
+    });
+    // nur feste, selbst erzeugte Zeichen: kein Nutzertext im HTML
+    progressEl.innerHTML = dots.join(' ');
+  }
+
+  function chipList() {
+    var s = state.solved;
+    if (state.level === 0) {
+      return [
+        { c: 'level 1' },
+        { c: 'level 2', off: !s[0] },
+        { c: 'level 3', off: !s[1] },
+        { c: 'status' },
+        { c: 'hilfe' }
+      ];
+    }
+    var base;
+    if (state.level === 1) {
+      base = [
+        { c: 'dateien' }, { c: 'lies notiz.txt' }, { c: 'lies profil.txt' },
+        { c: 'lies chat.log' }, { c: 'login ', fill: true }
+      ];
+    } else if (state.level === 2) {
+      base = [
+        { c: 'nachricht' }, { c: 'analyse' }, { c: 'shift ', fill: true }, { c: 'code ', fill: true }
+      ];
+    } else {
+      base = [
+        { c: 'log' }, { c: 'suche fehler' }, { c: 'suche erfolg' },
+        { c: 'suche download' }, { c: 'taeter ', fill: true }
+      ];
+    }
+    return base.concat([{ c: 'hinweis' }, { c: 'menu' }]);
+  }
+
+  function renderChips() {
+    chipsEl.textContent = '';
+    chipList().forEach(function (chip) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chip';
+      b.textContent = chip.c.trim() + (chip.fill ? ' …' : '');
+      b.disabled = !!chip.off;
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); }); // Fokus/Tastatur behalten
+      b.addEventListener('click', function () {
+        if (chip.fill) {
+          input.value = chip.c;
+          input.focus();
+        } else {
+          run(chip.c);
+        }
+      });
+      chipsEl.appendChild(b);
+    });
+  }
+
+  function refresh() { renderStatus(); renderChips(); }
+
+  /* ---------- Hilfsfunktionen ---------- */
+
+  function norm(s) {
+    return String(s).toLowerCase()
+      .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+  }
+
+  function caesar(text, shift) {
+    return text.replace(/[A-Z]/g, function (ch) {
+      return String.fromCharCode((ch.charCodeAt(0) - 65 + shift + 26 * 2) % 26 + 65);
+    });
+  }
+
+  function cipherText() { return caesar(L2_PLAIN, L2_SHIFT); }
+
+  /* ---------- Menü & globale Befehle ---------- */
+
+  function showMenu() {
+    state.level = 0;
+    refresh();
+    print('');
+    print('=== MISSIONEN ===', 'head');
+    for (var i = 1; i <= LEVEL_COUNT; i++) {
+      var open = i === 1 || state.solved[i - 2];
+      var tag = state.solved[i - 1] ? 'GELÖST' : (open ? 'OFFEN' : 'GESPERRT');
+      print('[' + i + '] ' + TITLES[i] + ' ... ' + tag, state.solved[i - 1] ? 'ok' : (open ? '' : 'dim'));
+    }
+    print('');
+    print('Starte mit "level <nummer>". Hilfe: "hilfe".', 'dim');
+  }
+
+  function showHelp() {
+    print('');
+    print('BEFEHLE', 'head');
+    printAll([
+      'hilfe ............ diese Übersicht',
+      'menu ............. Missionsübersicht',
+      'level <n> ........ Mission starten (1-3)',
+      'hinweis .......... Tipp zur aktuellen Mission',
+      'status ........... Fortschritt anzeigen',
+      'clear ............ Bildschirm leeren',
+      'reset ............ Spielstand löschen'
+    ]);
+    if (state.level === 1) {
+      printAll(['', 'MISSION 1:', 'dateien ........... Dateien auflisten', 'lies <datei> ..... Datei lesen', 'login <passwort> . Einloggen']);
+    } else if (state.level === 2) {
+      printAll(['', 'MISSION 2:', 'nachricht ........ abgefangenen Funkspruch zeigen', 'analyse .......... Buchstaben zählen', 'shift <1-25> ..... Buchstaben zurückschieben', 'code <wort> ...... Codewort abgeben']);
+    } else if (state.level === 3) {
+      printAll(['', 'MISSION 3:', 'log .............. komplette Logdatei', 'suche <begriff> .. Zeilen filtern', 'taeter <ip> ...... Eindringling melden']);
+    }
+    print('Tipp: Auf dem Handy kannst du die Knöpfe unten antippen.', 'dim');
+  }
+
+  function showStatus() {
+    print('');
+    print('FORTSCHRITT', 'head');
+    for (var i = 1; i <= LEVEL_COUNT; i++) {
+      print('Level ' + i + ' (' + TITLES[i] + '): ' + (state.solved[i - 1] ? 'gelöst' : 'offen'), state.solved[i - 1] ? 'ok' : '');
+    }
+  }
+
+  function startLevel(n) {
+    if (!(n >= 1 && n <= LEVEL_COUNT)) {
+      print('Unbekanntes Level. Verfügbar: 1 bis ' + LEVEL_COUNT + '.', 'err');
+      return;
+    }
+    if (n > 1 && !state.solved[n - 2]) {
+      print('Level ' + n + ' ist gesperrt. Löse zuerst Level ' + (n - 1) + '.', 'err');
+      return;
+    }
+    state.level = n;
+    refresh();
+    print('');
+    print('=== MISSION ' + n + ': ' + TITLES[n].toUpperCase() + ' ===', 'head');
+    if (n === 1) {
+      printAll([
+        'Ziel: Server NEBULA-7 (frei erfunden).',
+        'Das Konto "mfalke" ist passwortgeschützt. Finde heraus, wie das Passwort lautet.',
+        '',
+        'Befehle: dateien, lies <datei>, login <passwort>, hinweis'
+      ]);
+    } else if (n === 2) {
+      printAll([
+        'Du hast einen verschlüsselten Funkspruch abgefangen.',
+        'Er wurde mit einer Caesar-Chiffre verschlüsselt. Finde die Verschiebung und das Codewort.',
+        '',
+        'Befehle: nachricht, analyse, shift <1-25>, code <wort>, hinweis'
+      ]);
+      print('');
+      print(cipherText(), 'cipher');
+    } else {
+      printAll([
+        'Auf dem Gateway wurde etwas gestohlen. Die Logdatei (heute) liegt vor.',
+        'Finde die IP-Adresse des Eindringlings.',
+        '',
+        'Befehle: log, suche <begriff>, taeter <ip>, hinweis'
+      ]);
+    }
+  }
+
+  function showHint() {
+    if (state.level === 0) { print('Wähle zuerst ein Level: "level 1".', 'warn'); return; }
+    var list = HINTS[state.level];
+    var i = Math.min(hintCount[state.level], list.length - 1);
+    print('HINWEIS ' + (i + 1) + '/' + list.length + ': ' + list[i], 'warn');
+    if (hintCount[state.level] < list.length) { hintCount[state.level]++; }
+  }
+
+  function solve(n) {
+    state.solved[n - 1] = true;
+    saveProgress();
+    print('');
+    print('>>> ZUGRIFF GEWÄHRT <<<', 'ok');
+    print('Mission ' + n + ' abgeschlossen!', 'ok');
+    if (n < LEVEL_COUNT) {
+      state.level = 0;
+      refresh();
+      print('Weiter mit "level ' + (n + 1) + '".', 'dim');
+    } else {
+      state.level = 0;
+      refresh();
+      printAll([
+        '',
+        '*** ALLE MISSIONEN GELÖST ***',
+        'Du hast Passwort, Chiffre und Logdatei geknackt. Gut gemacht, Ghost.',
+        'Alles hier war frei erfunden. Nutze dein Wissen nur legal und verantwortungsvoll.'
+      ], 'ok');
+      print('Tippe "level 1" zum erneuten Spielen oder "reset" für einen frischen Start.', 'dim');
+    }
+  }
+
+  /* ---------- Level-Befehle ---------- */
+
+  function level1(cmd, arg) {
+    if (cmd === 'dateien' || cmd === 'ls') {
+      printAll(Object.keys(L1_FILES));
+      return true;
+    }
+    if (cmd === 'lies' || cmd === 'cat') {
+      if (!arg) { print('Benutzung: lies <datei>   (siehe "dateien")', 'warn'); return true; }
+      var name = norm(arg);
+      var key = Object.keys(L1_FILES).filter(function (k) { return k === name || k.split('.')[0] === name; })[0];
+      if (!key) { print('Datei nicht gefunden: ' + arg, 'err'); return true; }
+      printAll(L1_FILES[key]);
+      return true;
+    }
+    if (cmd === 'login') {
+      if (!arg) { print('Benutzung: login <passwort>', 'warn'); return true; }
+      if (arg.trim().toLowerCase() === L1_PASSWORD) {
+        solve(1);
+      } else {
+        print('Zugriff verweigert. Falsches Passwort.', 'err');
+        failCount.l1++;
+        if (failCount.l1 % 3 === 0) { print('Tipp: Mit "hinweis" bekommst du Hilfe.', 'dim'); }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function level2(cmd, arg) {
+    if (cmd === 'nachricht' || cmd === 'funk') {
+      print(cipherText(), 'cipher');
+      return true;
+    }
+    if (cmd === 'analyse') {
+      var counts = {};
+      cipherText().replace(/[A-Z]/g, function (c) { counts[c] = (counts[c] || 0) + 1; });
+      var top = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || (a < b ? -1 : 1); }).slice(0, 5);
+      print('Häufigste Buchstaben im Funkspruch:', 'dim');
+      top.forEach(function (c) { print('  ' + c + ' : ' + counts[c] + 'x'); });
+      return true;
+    }
+    if (cmd === 'shift') {
+      var n = /^\d+$/.test(arg) ? parseInt(arg, 10) : NaN;
+      if (!(n >= 1 && n <= 25)) { print('Benutzung: shift <zahl von 1 bis 25>', 'warn'); return true; }
+      print('shift ' + n + ': ' + caesar(cipherText(), -n), 'info');
+      return true;
+    }
+    if (cmd === 'code') {
+      if (!arg) { print('Benutzung: code <wort>', 'warn'); return true; }
+      if (norm(arg).toUpperCase().trim() === L2_ANSWER) {
+        print('Entschlüsselt: ' + L2_PLAIN, 'info');
+        solve(2);
+      } else {
+        print('Falscher Code. Der Funkspruch bleibt verschlossen.', 'err');
+      }
+      return true;
+    }
+    return false;
+  }
+
+  function level3(cmd, arg) {
+    if (cmd === 'log') {
+      print('ZEIT QUELLE EREIGNIS DETAIL', 'dim');
+      printAll(L3_LOG, 'logline');
+      return true;
+    }
+    if (cmd === 'suche' || cmd === 'grep') {
+      if (!arg) { print('Benutzung: suche <begriff>   z.B. suche fehler', 'warn'); return true; }
+      var needle = norm(arg);
+      var hits = L3_LOG.filter(function (l) { return norm(l).indexOf(needle) !== -1; });
+      if (!hits.length) { print('Keine Treffer.', 'dim'); return true; }
+      printAll(hits, 'logline');
+      print(hits.length + ' Treffer.', 'dim');
+      return true;
+    }
+    if (cmd === 'taeter' || cmd === 'ip' || cmd === 'melde') {
+      var ip = arg.trim();
+      if (!/^\d{1,3}(\.\d{1,3}){3}$/.test(ip)) { print('Benutzung: taeter <ip-adresse>   z.B. taeter 10.0.0.1', 'warn'); return true; }
+      if (ip === L3_ANSWER) {
+        print('Eindringling identifiziert: ' + ip, 'info');
+        solve(3);
+      } else if (L3_LOG.some(function (l) { return l.split(' ')[1] === ip; })) {
+        print('Diese IP taucht im Log auf, hat aber nicht gestohlen. Schau genauer hin.', 'err');
+      } else {
+        print('Diese IP kommt im Log gar nicht vor.', 'err');
+      }
+      return true;
+    }
+    return false;
+  }
+
+  var failCount = { l1: 0 };
+
+  /* ---------- Befehlsverarbeitung ---------- */
+
+  function run(raw) {
+    var text = String(raw).trim();
+    if (!text) { return; }
+    print('$ ' + text, 'cmd');
+    var m = text.match(/^(\S+)\s*([\s\S]*)$/);
+    var cmd = norm(m[1]);
+    var arg = m[2].trim();
+
+    if (resetPending && !(cmd === 'reset' && norm(arg) === 'ja')) { resetPending = false; }
+
+    switch (cmd) {
+      case 'hilfe': case 'help': case '?': showHelp(); break;
+      case 'menu': showMenu(); break;
+      case 'level': case 'lvl': startLevel(parseInt(arg, 10)); break;
+      case 'hinweis': case 'tipp': case 'hint': showHint(); break;
+      case 'status': showStatus(); break;
+      case 'clear': case 'cls': case 'leeren':
+        out.textContent = ''; queue.length = 0; break;
+      case 'reset':
+        if (norm(arg) === 'ja') {
+          state.solved = [false, false, false];
+          hintCount = { 1: 0, 2: 0, 3: 0 };
+          failCount.l1 = 0;
+          clearProgress();
+          resetPending = false;
+          print('Spielstand gelöscht.', 'warn');
+          showMenu();
+        } else {
+          resetPending = true;
+          print('Das löscht deinen gesamten Fortschritt. Zum Bestätigen tippe: reset ja', 'warn');
+        }
+        break;
+      default:
+        var handled = false;
+        if (state.level === 1) { handled = level1(cmd, arg); }
+        else if (state.level === 2) { handled = level2(cmd, arg); }
+        else if (state.level === 3) { handled = level3(cmd, arg); }
+        if (!handled) { print('Unbekannter Befehl: ' + m[1] + '. Tippe "hilfe".', 'err'); }
+    }
+    refresh();
+  }
+
+  /* ---------- Eingabe ---------- */
+
+  var history = [];
+  var histPos = 0;
+
+  document.getElementById('form').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = input.value;
+    input.value = '';
+    if (v.trim()) { history.push(v); histPos = history.length; }
+    run(v);
+  });
+
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowUp' && history.length) {
+      e.preventDefault();
+      histPos = Math.max(0, histPos - 1);
+      input.value = history[histPos];
+    } else if (e.key === 'ArrowDown' && history.length) {
+      e.preventDefault();
+      histPos = Math.min(history.length, histPos + 1);
+      input.value = history[histPos] || '';
+    }
+  });
+
+  /* ---------- Start ---------- */
+
+  function boot() {
+    printAll([
+      'GHOST//SHELL v1.0',
+      'Ein fiktives Hacking-Puzzle. Alle Namen, Server und Daten sind frei erfunden.',
+      ''
+    ], 'head');
+    var returning = loadProgress();
+    if (returning) {
+      print('Spielstand gefunden. Willkommen zurück, Ghost.', 'ok');
+    } else {
+      print('Willkommen, Ghost. Deine Aufträge warten.', 'dim');
+    }
+    showMenu();
+  }
+
+  refresh();
+  boot();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+# Betriebssystem
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editoren
+.vscode/
+.idea/
+*.swp
+*~
+
+# Abhängigkeiten und Build-Ausgaben (falls später z. B. eine APK gebaut wird)
+node_modules/
+dist/
+build/
+*.apk
+*.aab
+*.keystore
+*.jks
+
+# Lokale Konfiguration und Geheimnisse – niemals einchecken
+.env
+.env.*
+*.pem
+*.key
