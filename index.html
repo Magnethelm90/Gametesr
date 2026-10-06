@@ -165,8 +165,8 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 3;
-  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling'];
+  var LEVEL_COUNT = 7;
+  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor'];
 
   // Level 1
   var L1_PASSWORD = 'waldi1984';
@@ -233,6 +233,48 @@ form { display: flex; align-items: center; gap: 8px; }
   ];
   var L3_ANSWER = '203.0.113.66';
 
+  // Level 4: Base64
+  var L4_PLAIN = 'Der Schluessel lautet NACHTFALKE. Vernichte diese Nachricht.';
+  var L4_ANSWER = 'NACHTFALKE';
+
+  // Level 5: Binärcode (8 Bit pro Zeichen, ASCII)
+  var L5_PLAIN = 'PIN 4711 OFFEN';
+  var L5_ANSWER = '4711';
+
+  // Level 6: Netzwerk-Scan (frei erfundene Hosts und Dienste)
+  var L6_SCAN = [
+    'HOST        PORT DIENST   VERSION',
+    'drucker-01  631  cups     2.4 (2024)',
+    'web-01      80   http     2.4 (2024)',
+    'web-01      22   ssh      9.6 (2024)',
+    'alt-srv     21   ftp      oldftpd 0.9 (2011)',
+    'alt-srv     23   telnet   v1 (2009)',
+    'db-01       3306 sql      8.0 (2024)',
+    'kamera-03   554  stream   fw 4.2 (2024)'
+  ];
+  var L6_INFO = {
+    'drucker-01': 'Bürodrucker. Aktuelle Software, Zugang nur mit starkem Passwort.',
+    'web-01': 'Webserver. Aktuell, verschlüsselt (TLS), Updates laufen automatisch.',
+    'alt-srv': 'Altes Archivsystem. Seit 2012 keine Updates mehr. ftp und telnet senden alles im Klartext.',
+    'db-01': 'Datenbank. Aktuell, nur aus dem internen Netz erreichbar.',
+    'kamera-03': 'Eingangskamera. Neue Firmware, nur intern erreichbar.'
+  };
+  var L6_ANSWER = 'alt-srv';
+
+  // Level 7: Tresor aus drei Teilen (ROT13, Hex, rückwärts)
+  var L7_PARTS = ['SCHATTEN', 'FALKE', 'NEBEL'];
+  var L7_FILES = {
+    'teil1.txt': ['Tresorteil 1 (ROT13):', '  ' + rot13(L7_PARTS[0])],
+    'teil2.txt': ['Tresorteil 2 (Hex):', '  ' + toHex(L7_PARTS[1])],
+    'teil3.txt': ['Tresorteil 3 (rückwärts):', '  ' + L7_PARTS[2].split('').reverse().join('')],
+    'anleitung.txt': [
+      'Der Tresor öffnet sich mit allen drei Wörtern,',
+      'durch Bindestriche verbunden, in der Reihenfolge der Teile.',
+      'Beispiel: wort1-wort2-wort3'
+    ]
+  };
+  var L7_ANSWER = L7_PARTS.join('-');
+
   var HINTS = {
     1: [
       'Schau dir alle Dateien an. Eine davon verrät die Regel für das Passwort.',
@@ -244,6 +286,26 @@ form { display: flex; align-items: center; gap: 8px; }
       'Probiere mit "shift <zahl>" verschiedene Verschiebungen. Tipp: "analyse" zeigt die häufigsten Buchstaben. Im Deutschen ist E am häufigsten.',
       'Die Verschiebung liegt zwischen 1 und 25. Im Klartext steht ein Codewort nach "ZUGANGSCODE LAUTET".'
     ],
+    4: [
+      'Base64 ist keine Verschlüsselung, nur eine andere Schreibweise. Oft endet sie mit "=".',
+      'Mit "base64 <text>" kannst du Text zurückverwandeln. Kopiere den Text aus "dump" (lange auf den Text tippen, markieren, kopieren).',
+      'Im entschlüsselten Satz steht das Schlüsselwort in Großbuchstaben.'
+    ],
+    5: [
+      'Jedes Zeichen besteht aus 8 Bits (Nullen und Einsen). 8 Bits ergeben eine Zahl, und die Zahl steht für einen Buchstaben (ASCII).',
+      '"byte <n>" zeigt dir das n-te Zeichen der Nachricht. Oder kopiere alles und nutze "bin <bits>".',
+      'Die Nachricht nennt eine PIN aus vier Ziffern.'
+    ],
+    6: [
+      'Ein Ziel ist dann ein Schwachpunkt, wenn es alt ist UND unverschlüsselt arbeitet.',
+      'Mit "info <host>" bekommst du Details zu jedem Rechner.',
+      'Zwei Dienste desselben Hosts sind veraltet und senden im Klartext.'
+    ],
+    7: [
+      'Jeder Teil nutzt ein anderes Verfahren. Es steht jeweils in der Datei.',
+      'Befehle: "rot13 <text>", "hex <text>" und "umkehren <text>".',
+      'Die drei Wörter in der Reihenfolge Teil 1, 2, 3 mit Bindestrichen verbinden, z. B. wort1-wort2-wort3.'
+    ],
     3: [
       'Ein Eindringling versucht oft mehrmals, sich einzuloggen, bevor es klappt.',
       'Aber nicht jeder mit Fehlversuchen ist böse. Wer hat danach Daten heruntergeladen UND Spuren verwischt?',
@@ -253,8 +315,10 @@ form { display: flex; align-items: center; gap: 8px; }
 
   /* ---------- Zustand & Speicher ---------- */
 
-  var state = { solved: [false, false, false], level: 0 };
-  var hintCount = { 1: 0, 2: 0, 3: 0 };
+  function emptySolved() { var a = []; for (var i = 0; i < LEVEL_COUNT; i++) { a.push(false); } return a; }
+  function emptyHints() { var h = {}; for (var i = 1; i <= LEVEL_COUNT; i++) { h[i] = 0; } return h; }
+  var state = { solved: emptySolved(), level: 0 };
+  var hintCount = emptyHints();
   var resetPending = false;
 
   function loadProgress() {
@@ -262,8 +326,9 @@ form { display: flex; align-items: center; gap: 8px; }
       var raw = window.localStorage.getItem(STORE_KEY);
       if (!raw) { return false; }
       var data = JSON.parse(raw);
-      if (data && Array.isArray(data.solved) && data.solved.length === LEVEL_COUNT) {
-        state.solved = data.solved.map(function (v) { return v === true; });
+      if (data && Array.isArray(data.solved)) {
+        // auch aeltere Speicherstaende (weniger Level) bleiben gueltig
+        state.solved = emptySolved().map(function (_, i) { return data.solved[i] === true; });
         return state.solved.some(Boolean);
       }
     } catch (e) { /* Speicher nicht verfügbar oder defekt: ohne Speicherstand weiterspielen */ }
@@ -314,7 +379,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Oberfläche: Prompt, Fortschritt, Chips ---------- */
 
   function hostName() {
-    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway'][state.level];
+    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway', 'ghost@depot', 'ghost@signal', 'ghost@netz', 'ghost@tresor'][state.level];
   }
 
   function renderStatus() {
@@ -329,10 +394,10 @@ form { display: flex; align-items: center; gap: 8px; }
   function chipList() {
     var s = state.solved;
     if (state.level === 0) {
+      var next = s.indexOf(false) + 1;
       return [
-        { c: 'level 1' },
-        { c: 'level 2', off: !s[0] },
-        { c: 'level 3', off: !s[1] },
+        { c: 'level ' + (next || 1) },
+        { c: 'level ', fill: true },
         { c: 'status' },
         { c: 'hilfe' }
       ];
@@ -347,10 +412,21 @@ form { display: flex; align-items: center; gap: 8px; }
       base = [
         { c: 'nachricht' }, { c: 'analyse' }, { c: 'shift ', fill: true }, { c: 'code ', fill: true }
       ];
-    } else {
+    } else if (state.level === 3) {
       base = [
         { c: 'log' }, { c: 'suche fehler' }, { c: 'suche erfolg' },
         { c: 'suche download' }, { c: 'taeter ', fill: true }
+      ];
+    } else if (state.level === 4) {
+      base = [{ c: 'dump' }, { c: 'base64 ', fill: true }, { c: 'schluessel ', fill: true }];
+    } else if (state.level === 5) {
+      base = [{ c: 'signal' }, { c: 'byte ', fill: true }, { c: 'bin ', fill: true }, { c: 'pin ', fill: true }];
+    } else if (state.level === 6) {
+      base = [{ c: 'scan' }, { c: 'info ', fill: true }, { c: 'ziel ', fill: true }];
+    } else {
+      base = [
+        { c: 'dateien' }, { c: 'lies teil1.txt' }, { c: 'lies teil2.txt' }, { c: 'lies teil3.txt' },
+        { c: 'rot13 ', fill: true }, { c: 'hex ', fill: true }, { c: 'umkehren ', fill: true }, { c: 'tresor ', fill: true }
       ];
     }
     return base.concat([{ c: 'hinweis' }, { c: 'menu' }]);
@@ -394,6 +470,41 @@ form { display: flex; align-items: center; gap: 8px; }
 
   function cipherText() { return caesar(L2_PLAIN, L2_SHIFT); }
 
+  function rot13(text) {
+    return text.replace(/[A-Za-z]/g, function (ch) {
+      var base = ch <= 'Z' ? 65 : 97;
+      return String.fromCharCode((ch.charCodeAt(0) - base + 13) % 26 + base);
+    });
+  }
+
+  function toHex(text) {
+    return text.split('').map(function (c) { return ('0' + c.charCodeAt(0).toString(16)).slice(-2); }).join('');
+  }
+
+  function fromHex(text) {
+    var h = text.replace(/\s+/g, '').replace(/^0x/i, '');
+    if (!h || h.length % 2 || !/^[0-9a-fA-F]+$/.test(h)) { return null; }
+    var r = '';
+    for (var i = 0; i < h.length; i += 2) { r += String.fromCharCode(parseInt(h.substr(i, 2), 16)); }
+    return /^[\x20-\x7e]+$/.test(r) ? r : null;
+  }
+
+  function toBits(text) {
+    return text.split('').map(function (c) { return ('00000000' + c.charCodeAt(0).toString(2)).slice(-8); });
+  }
+
+  function printableOrNull(str) { return /^[\x20-\x7e]+$/.test(str) ? str : null; }
+
+  function fromBase64(text) {
+    try {
+      var clean = text.replace(/\s+/g, '');
+      if (!/^[A-Za-z0-9+\/]+={0,2}$/.test(clean)) { return null; }
+      return printableOrNull(atob(clean));
+    } catch (e) { return null; }
+  }
+
+  function base64Text() { return btoa(L4_PLAIN); }
+
   /* ---------- Menü & globale Befehle ---------- */
 
   function showMenu() {
@@ -416,7 +527,7 @@ form { display: flex; align-items: center; gap: 8px; }
     printAll([
       'hilfe ............ diese Übersicht',
       'menu ............. Missionsübersicht',
-      'level <n> ........ Mission starten (1-3)',
+      'level <n> ........ Mission starten (1-' + LEVEL_COUNT + ')',
       'hinweis .......... Tipp zur aktuellen Mission',
       'status ........... Fortschritt anzeigen',
       'clear ............ Bildschirm leeren',
@@ -428,6 +539,14 @@ form { display: flex; align-items: center; gap: 8px; }
       printAll(['', 'MISSION 2:', 'nachricht ........ abgefangenen Funkspruch zeigen', 'analyse .......... Buchstaben zählen', 'shift <1-25> ..... Buchstaben zurückschieben', 'code <wort> ...... Codewort abgeben']);
     } else if (state.level === 3) {
       printAll(['', 'MISSION 3:', 'log .............. komplette Logdatei', 'suche <begriff> .. Zeilen filtern', 'taeter <ip> ...... Eindringling melden']);
+    } else if (state.level === 4) {
+      printAll(['', 'MISSION 4:', 'dump ............. Datenpaket anzeigen', 'base64 <text> .... Base64 zurückverwandeln', 'schluessel <wort>  Schlüsselwort abgeben']);
+    } else if (state.level === 5) {
+      printAll(['', 'MISSION 5:', 'signal ........... Bitfolge anzeigen', 'byte <n> ......... n-tes Zeichen (8 Bit) entschlüsseln', 'bin <bits> ....... Bits in Text umwandeln', 'pin <zahl> ....... PIN abgeben']);
+    } else if (state.level === 6) {
+      printAll(['', 'MISSION 6:', 'scan ............. Netzwerk-Scan anzeigen', 'info <host> ...... Details zu einem Rechner', 'ziel <host> ...... Schwächsten Rechner melden']);
+    } else if (state.level === 7) {
+      printAll(['', 'MISSION 7:', 'dateien / lies <datei>', 'rot13 <text> ..... ROT13 umkehren', 'hex <text> ....... Hex in Text umwandeln', 'umkehren <text> .. Text rückwärts lesen', 'tresor <a-b-c> ... Tresor öffnen']);
     }
     print('Tipp: Auf dem Handy kannst du die Knöpfe unten antippen.', 'dim');
   }
@@ -469,12 +588,40 @@ form { display: flex; align-items: center; gap: 8px; }
       ]);
       print('');
       print(cipherText(), 'cipher');
-    } else {
+    } else if (n === 3) {
       printAll([
         'Auf dem Gateway wurde etwas gestohlen. Die Logdatei (heute) liegt vor.',
         'Finde die IP-Adresse des Eindringlings.',
         '',
         'Befehle: log, suche <begriff>, taeter <ip>, hinweis'
+      ]);
+    } else if (n === 4) {
+      printAll([
+        'Im Datendepot liegt ein Datenpaket. Es sieht aus wie wirres Zeug, ist aber Base64-kodiert.',
+        'Wandle es zurück und finde das Schlüsselwort.',
+        '',
+        'Befehle: dump, base64 <text>, schluessel <wort>, hinweis'
+      ]);
+    } else if (n === 5) {
+      printAll([
+        'Ein Türsteuerungs-Signal wurde mitgeschnitten: nur Nullen und Einsen.',
+        'Jede Gruppe aus 8 Bits ist ein Zeichen. Finde die PIN.',
+        '',
+        'Befehle: signal, byte <n>, bin <bits>, pin <zahl>, hinweis'
+      ]);
+    } else if (n === 6) {
+      printAll([
+        'Du prüfst ein (frei erfundenes) Firmennetz als Sicherheitsberater.',
+        'Finde den Rechner, der am dringendsten abgesichert werden muss.',
+        '',
+        'Befehle: scan, info <host>, ziel <host>, hinweis'
+      ]);
+    } else {
+      printAll([
+        'Das Finale: ein Tresor, geschützt durch drei Teile, jeder anders verschleiert.',
+        'Entschlüssele alle drei und öffne den Tresor.',
+        '',
+        'Befehle: dateien, lies <datei>, rot13, hex, umkehren, tresor <a-b-c>, hinweis'
       ]);
     }
   }
@@ -503,7 +650,7 @@ form { display: flex; align-items: center; gap: 8px; }
       printAll([
         '',
         '*** ALLE MISSIONEN GELÖST ***',
-        'Du hast Passwort, Chiffre und Logdatei geknackt. Gut gemacht, Ghost.',
+        'Du hast alle sieben Rätsel geknackt. Gut gemacht, Ghost.',
         'Alles hier war frei erfunden. Nutze dein Wissen nur legal und verantwortungsvoll.'
       ], 'ok');
       print('Tippe "level 1" zum erneuten Spielen oder "reset" für einen frischen Start.', 'dim');
@@ -512,19 +659,24 @@ form { display: flex; align-items: center; gap: 8px; }
 
   /* ---------- Level-Befehle ---------- */
 
-  function level1(cmd, arg) {
+  function fileCmd(files, cmd, arg) {
     if (cmd === 'dateien' || cmd === 'ls') {
-      printAll(Object.keys(L1_FILES));
+      printAll(Object.keys(files));
       return true;
     }
     if (cmd === 'lies' || cmd === 'cat') {
       if (!arg) { print('Benutzung: lies <datei>   (siehe "dateien")', 'warn'); return true; }
       var name = norm(arg);
-      var key = Object.keys(L1_FILES).filter(function (k) { return k === name || k.split('.')[0] === name; })[0];
+      var key = Object.keys(files).filter(function (k) { return k === name || k.split('.')[0] === name; })[0];
       if (!key) { print('Datei nicht gefunden: ' + arg, 'err'); return true; }
-      printAll(L1_FILES[key]);
+      printAll(files[key]);
       return true;
     }
+    return false;
+  }
+
+  function level1(cmd, arg) {
+    if (fileCmd(L1_FILES, cmd, arg)) { return true; }
     if (cmd === 'login') {
       if (!arg) { print('Benutzung: login <passwort>', 'warn'); return true; }
       if (arg.trim().toLowerCase() === L1_PASSWORD) {
@@ -602,6 +754,96 @@ form { display: flex; align-items: center; gap: 8px; }
     return false;
   }
 
+  function level4(cmd, arg) {
+    if (cmd === 'dump') { print(base64Text(), 'cipher'); return true; }
+    if (cmd === 'base64' || cmd === 'dekodiere') {
+      if (!arg) { print('Benutzung: base64 <text>', 'warn'); return true; }
+      var plain = fromBase64(arg);
+      print(plain === null ? 'Das ist kein gültiges Base64.' : 'Ergebnis: ' + plain, plain === null ? 'err' : 'info');
+      return true;
+    }
+    if (cmd === 'schluessel' || cmd === 'code') {
+      if (!arg) { print('Benutzung: schluessel <wort>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L4_ANSWER) { solve(4); } else { print('Falsches Schlüsselwort.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level5(cmd, arg) {
+    var bits = toBits(L5_PLAIN);
+    if (cmd === 'signal') {
+      print(bits.join(' '), 'cipher');
+      print(bits.length + ' Gruppen. Mit "byte <n>" entschlüsselst du die n-te.', 'dim');
+      return true;
+    }
+    if (cmd === 'byte') {
+      var n = /^\d+$/.test(arg) ? parseInt(arg, 10) : NaN;
+      if (!(n >= 1 && n <= bits.length)) { print('Benutzung: byte <1-' + bits.length + '>', 'warn'); return true; }
+      var code = parseInt(bits[n - 1], 2);
+      print(bits[n - 1] + ' = ' + code + ' = "' + String.fromCharCode(code) + '"', 'info');
+      return true;
+    }
+    if (cmd === 'bin') {
+      var clean = arg.replace(/\s+/g, '');
+      if (!/^[01]+$/.test(clean) || clean.length % 8) { print('Benutzung: bin <Bits>, Länge muss durch 8 teilbar sein.', 'warn'); return true; }
+      var text = '';
+      for (var i = 0; i < clean.length; i += 8) { text += String.fromCharCode(parseInt(clean.substr(i, 8), 2)); }
+      print('Ergebnis: ' + (printableOrNull(text) || '(nicht lesbar)'), 'info');
+      return true;
+    }
+    if (cmd === 'pin') {
+      if (!arg) { print('Benutzung: pin <zahl>', 'warn'); return true; }
+      if (arg.trim() === L5_ANSWER) { solve(5); } else { print('Falsche PIN. Die Tür bleibt zu.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level6(cmd, arg) {
+    if (cmd === 'scan') { printAll(L6_SCAN, 'logline'); return true; }
+    var host = arg.trim().toLowerCase();
+    if (cmd === 'info') {
+      if (!host) { print('Benutzung: info <host>', 'warn'); return true; }
+      print(L6_INFO.hasOwnProperty(host) ? host + ': ' + L6_INFO[host] : 'Unbekannter Host: ' + arg, L6_INFO.hasOwnProperty(host) ? 'info' : 'err');
+      return true;
+    }
+    if (cmd === 'ziel') {
+      if (!host) { print('Benutzung: ziel <host>', 'warn'); return true; }
+      if (host === L6_ANSWER) { solve(6); }
+      else if (L6_INFO.hasOwnProperty(host)) { print('Dieser Rechner ist solide aufgestellt. Es gibt einen dringenderen Fall.', 'err'); }
+      else { print('Unbekannter Host: ' + arg, 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level7(cmd, arg) {
+    if (fileCmd(L7_FILES, cmd, arg)) { return true; }
+    if (cmd === 'rot13') {
+      if (!arg) { print('Benutzung: rot13 <text>', 'warn'); return true; }
+      print('Ergebnis: ' + rot13(arg), 'info');
+      return true;
+    }
+    if (cmd === 'hex') {
+      if (!arg) { print('Benutzung: hex <text>', 'warn'); return true; }
+      var r = fromHex(arg);
+      print(r === null ? 'Das ist kein gültiger Hex-Text.' : 'Ergebnis: ' + r, r === null ? 'err' : 'info');
+      return true;
+    }
+    if (cmd === 'umkehren') {
+      if (!arg) { print('Benutzung: umkehren <text>', 'warn'); return true; }
+      print('Ergebnis: ' + arg.split('').reverse().join(''), 'info');
+      return true;
+    }
+    if (cmd === 'tresor') {
+      if (!arg) { print('Benutzung: tresor <wort1-wort2-wort3>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L7_ANSWER) { solve(7); } else { print('Der Tresor bleibt verschlossen.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
   var failCount = { l1: 0 };
 
   /* ---------- Befehlsverarbeitung ---------- */
@@ -626,8 +868,8 @@ form { display: flex; align-items: center; gap: 8px; }
         out.textContent = ''; queue.length = 0; break;
       case 'reset':
         if (norm(arg) === 'ja') {
-          state.solved = [false, false, false];
-          hintCount = { 1: 0, 2: 0, 3: 0 };
+          state.solved = emptySolved();
+          hintCount = emptyHints();
           failCount.l1 = 0;
           clearProgress();
           resetPending = false;
@@ -643,6 +885,10 @@ form { display: flex; align-items: center; gap: 8px; }
         if (state.level === 1) { handled = level1(cmd, arg); }
         else if (state.level === 2) { handled = level2(cmd, arg); }
         else if (state.level === 3) { handled = level3(cmd, arg); }
+        else if (state.level === 4) { handled = level4(cmd, arg); }
+        else if (state.level === 5) { handled = level5(cmd, arg); }
+        else if (state.level === 6) { handled = level6(cmd, arg); }
+        else if (state.level === 7) { handled = level7(cmd, arg); }
         if (!handled) { print('Unbekannter Befehl: ' + m[1] + '. Tippe "hilfe".', 'err'); }
     }
     refresh();

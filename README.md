@@ -13,13 +13,17 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst drei Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst sieben Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
 | 1 – Das Passwort | Finde in Notizen, Profil und Chat heraus, wie das Passwort lautet. |
 | 2 – Die Chiffre | Knacke eine Caesar-Chiffre und finde das Codewort. |
 | 3 – Der Eindringling | Werte eine Logdatei aus und finde die IP-Adresse des Täters. |
+| 4 – Das Datendepot | Wandle ein Base64-Datenpaket zurück und finde das Schlüsselwort. |
+| 5 – Das Signal | Lies eine Bitfolge (8 Bit pro Zeichen) und finde die PIN. |
+| 6 – Der Netzscan | Finde im fiktiven Firmennetz den Rechner, der am dringendsten abgesichert werden muss. |
+| 7 – Der Tresor | Finale: Drei Teile, drei Verfahren (ROT13, Hex, rückwärts). |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
