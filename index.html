@@ -165,8 +165,8 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 12;
-  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe'];
+  var LEVEL_COUNT = 17;
+  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe', 'Die Kurznachricht', 'Der Lizenzschlüssel', 'Der Serverraum', 'Die Zwiebel', 'Der Tresorcode'];
 
   // Level 1
   var L1_PASSWORD = 'waldi1984';
@@ -363,6 +363,51 @@ form { display: flex; align-items: center; gap: 8px; }
   var L12_ANSWER = 'VORTEX-NULL-7';
   var fsCwd = ['home', 'ghost'];
 
+  // Level 13: Handytasten (Multi-Tap)
+  var KEYPAD = { 2: 'ABC', 3: 'DEF', 4: 'GHI', 5: 'JKL', 6: 'MNO', 7: 'PQRS', 8: 'TUV', 9: 'WXYZ' };
+  var L13_PLAIN = 'TREFFEN AM BAHNHOF';
+  var L13_ANSWER = 'BAHNHOF';
+
+  // Level 14: Lizenzschluessel (Quersumme 42)
+  var L14_EXAMPLES = ['0166-1318-6091', '0182-6330-4348', '0737-5043-1039'];
+  var L14_CANDIDATES = ['9852-3534-1213', '8195-0446-6001', '1235-3118-5843', '4058-3223-7035', '3025-5613-4227', '1523-6109-2108'];
+  var L14_ANSWER = '4058-3223-7035';
+
+  // Level 15: Textadventure
+  var L15_ROOMS = {
+    flur: {
+      name: 'Flur',
+      text: 'Ein kahler Flur. Im Norden liegt das Büro, im Osten das Lager. Im Süden: eine schwere Stahltür mit Kartenleser und Zifferntastatur.',
+      exits: { nord: 'buero', ost: 'lager' }
+    },
+    buero: {
+      name: 'Büro',
+      text: 'Ein unordentliches Büro. Am Monitor klebt ein Zettel. Der Ausgang führt nach Süden.',
+      exits: { sued: 'flur' },
+      items: ['zettel']
+    },
+    lager: {
+      name: 'Lager',
+      text: 'Ein Lagerraum voller Kisten. Auf einem Regal liegen eine Keycard und ein Besen. Der Ausgang führt nach Westen.',
+      exits: { west: 'flur' },
+      items: ['keycard', 'besen']
+    }
+  };
+  var L15_TEXTS = {
+    zettel: 'Auf dem Zettel steht: "Serverraum-Code: 7319. Ohne Keycard nutzlos!"',
+    keycard: 'Eine Keycard mit der Aufschrift "SERVERRAUM".',
+    besen: 'Ein ganz normaler Besen.'
+  };
+  var L15_CODE = '7319';
+  var adv = { room: 'flur', inv: [], items: {}, card: false };
+
+  // Level 16: Zwiebel (drei Schichten: rueckwaerts -> ROT13 -> Base64)
+  var L16_PLAIN = 'DER SCHLUESSEL IST ZWIEBEL';
+  var L16_ANSWER = 'ZWIEBEL';
+
+  // Level 17: Mastermind
+  var mm = { secret: '', tries: [] };
+
   var HINTS = {
     1: [
       'Schau dir alle Dateien an. Eine davon verrät die Regel für das Passwort.',
@@ -419,6 +464,31 @@ form { display: flex; align-items: center; gap: 8px; }
       'Versteckte Ordner beginnen mit einem Punkt und erscheinen nur mit "ls -a". Schau dir /srv an.',
       'Im versteckten Ordner liegt eine Datei mit dem Passwort. Gib es mit "login <passwort>" ein.'
     ],
+    13: [
+      'Alte Handys: Taste 2 steht für ABC. Einmal drücken = A, zweimal = B, dreimal = C.',
+      'Jede Zifferngruppe ist ein Buchstabe. Die Anzahl der gleichen Ziffern sagt, der wievielte Buchstabe der Taste gemeint ist. "/" trennt Wörter.',
+      'Mit "tastatur" siehst du das Tastenfeld. "t9 <code>" übersetzt die Nachricht.'
+    ],
+    14: [
+      'Schau dir die gültigen Beispiele genau an. Was haben alle gemeinsam?',
+      'Zähle alle Ziffern eines Schlüssels zusammen. "quersumme <schluessel>" rechnet für dich.',
+      'Bei allen gültigen Schlüsseln ist die Quersumme gleich. Welcher Kandidat erreicht sie?'
+    ],
+    15: [
+      'Du brauchst zwei Dinge für die Tür: eine Keycard und einen Code.',
+      'Die Keycard liegt im Lager (Osten), der Code steht auf einem Zettel im Büro (Norden).',
+      'Nimm die Keycard mit, geh in den Flur, "benutze keycard", dann "code <zahl>".'
+    ],
+    16: [
+      'Eine Zwiebel hat Schichten. Hier wurde dreimal verschleiert.',
+      'Es sind Base64, ROT13 und Rückwärtsschreiben. Du musst sie in umgekehrter Reihenfolge entfernen: zuerst die äußerste Schicht.',
+      'Das Paket sieht aus wie Base64. Danach folgt ROT13, zuletzt "umkehren".'
+    ],
+    17: [
+      'Der Code hat 4 verschiedene Ziffern. "richtig" heißt: Ziffer und Platz stimmen. "falscher Platz": Ziffer kommt vor, steht aber woanders.',
+      'Starte mit zwei ganz verschiedenen Tipps, z. B. 0123 und 4567, und finde heraus, welche Ziffern überhaupt vorkommen.',
+      'Tausche danach systematisch Ziffern und Plätze und lies jedes Ergebnis genau. Mit etwa 7 bis 8 Tipps schaffst du es.'
+    ],
     3: [
       'Ein Eindringling versucht oft mehrmals, sich einzuloggen, bevor es klappt.',
       'Aber nicht jeder mit Fehlversuchen ist böse. Wer hat danach Daten heruntergeladen UND Spuren verwischt?',
@@ -454,11 +524,52 @@ form { display: flex; align-items: center; gap: 8px; }
     12: {
       host: function () { return 'ghost@mainframe:/' + fsCwd.join('/'); },
       chips: [{ c: 'ls' }, { c: 'ls -a' }, { c: 'pwd' }, { c: 'cd ', fill: true }, { c: 'cat ', fill: true }, { c: 'login ', fill: true }],
-      intro: ['Das Finale: Du sitzt am Terminal des Mainframes.', 'Irgendwo liegt das Passwort versteckt. Navigiere durch die Ordner und finde es.', '', 'Befehle: ls, ls -a, cd <ordner>, cat <datei>, pwd, login <passwort>, hinweis'],
+      intro: ['Du sitzt am Terminal des Mainframes.', 'Irgendwo liegt das Passwort versteckt. Navigiere durch die Ordner und finde es.', '', 'Befehle: ls, ls -a, cd <ordner>, cat <datei>, pwd, login <passwort>, hinweis'],
       help: ['ls [-a] [pfad] ... Inhalt anzeigen (-a: auch Versteckte)', 'cd <ordner> ...... Ordner wechseln (.. = zurück, / = Wurzel)', 'cat <datei> ...... Datei lesen', 'pwd .............. aktueller Pfad', 'login <passwort> . Mainframe öffnen'],
       start: function () { fsCwd = ['home', 'ghost']; },
       run: level12
     }
+  };
+
+  EXTRA[13] = {
+    chips: [{ c: 'sms' }, { c: 'tastatur' }, { c: 't9 ', fill: true }, { c: 'wort ', fill: true }],
+    intro: ['Eine alte SMS wurde aus einem Handy ausgelesen: nur Ziffern.', 'Damals tippte man Buchstaben mehrfach auf derselben Taste. Entschlüssele die Nachricht.', '', 'Befehle: sms, tastatur, t9 <code>, wort <wort>, hinweis'],
+    help: ['sms .............. Nachricht anzeigen', 'tastatur ......... Tastenfeld anzeigen', 't9 <code> ....... Ziffern in Text umwandeln', 'wort <wort> ...... Treffpunkt abgeben'],
+    run: level13
+  };
+  EXTRA[14] = {
+    chips: [{ c: 'beispiele' }, { c: 'kandidaten' }, { c: 'quersumme ', fill: true }, { c: 'aktiviere ', fill: true }],
+    intro: ['Eine Software prüft Lizenzschlüssel nach einer geheimen Regel.', 'Du kennst drei gültige Schlüssel. Welcher der sechs Kandidaten ist ebenfalls gültig?', '', 'Befehle: beispiele, kandidaten, quersumme <schluessel>, aktiviere <schluessel>, hinweis'],
+    help: ['beispiele ........ gültige Schlüssel', 'kandidaten ....... Schlüssel zum Prüfen', 'quersumme <text> . Ziffern zusammenzählen', 'aktiviere <key> .. Schlüssel einlösen'],
+    run: level14
+  };
+  EXTRA[15] = {
+    host: function () { return 'ghost@' + L15_ROOMS[adv.room].name.toLowerCase().replace('ü', 'ue'); },
+    chips: [{ c: 'umsehen' }, { c: 'gehe nord' }, { c: 'gehe ost' }, { c: 'gehe sued' }, { c: 'gehe west' }, { c: 'nimm ', fill: true }, { c: 'lies ', fill: true }, { c: 'benutze ', fill: true }, { c: 'inventar' }, { c: 'code ', fill: true }],
+    intro: ['Du stehst im Gebäude und willst in den Serverraum. Die Tür ist gesichert.', 'Sieh dich um, sammle, was du brauchst, und öffne die Tür.', '', 'Befehle: umsehen, gehe <richtung>, nimm <ding>, lies <ding>, benutze <ding>, inventar, code <zahl>, hinweis'],
+    help: ['umsehen .......... Raum beschreiben', 'gehe <richtung> .. nord, ost, sued, west', 'nimm <ding> ...... Gegenstand aufheben', 'lies <ding> ...... Gegenstand untersuchen', 'benutze <ding> ... Gegenstand benutzen', 'inventar ......... was du trägst', 'code <zahl> ...... Zifferncode eingeben'],
+    start: function () {
+      adv = { room: 'flur', inv: [], items: {}, card: false };
+      Object.keys(L15_ROOMS).forEach(function (k) { adv.items[k] = (L15_ROOMS[k].items || []).slice(); });
+    },
+    run: level15
+  };
+  EXTRA[16] = {
+    chips: [{ c: 'paket' }, { c: 'base64 ', fill: true }, { c: 'rot13 ', fill: true }, { c: 'umkehren ', fill: true }, { c: 'schluessel ', fill: true }],
+    intro: ['Ein Datenpaket wurde dreifach verschleiert, wie die Schichten einer Zwiebel.', 'Schäle Schicht für Schicht und finde das Schlüsselwort.', '', 'Befehle: paket, base64 <text>, rot13 <text>, umkehren <text>, schluessel <wort>, hinweis'],
+    help: ['paket ............ Datenpaket anzeigen', 'base64 <text> .... Base64 zurückverwandeln', 'rot13 <text> ..... ROT13 umkehren', 'umkehren <text> .. Text rückwärts lesen', 'schluessel <wort> Schlüsselwort abgeben'],
+    run: level16
+  };
+  EXTRA[17] = {
+    chips: [{ c: 'rate ', fill: true }, { c: 'verlauf' }],
+    intro: ['Das letzte Hindernis: der Tresorcode. 4 Ziffern, jede nur einmal (0 bis 9).', 'Rate ihn. Nach jedem Tipp erfährst du, wie nah du dran bist.', '', 'Befehle: rate <4 Ziffern>, verlauf, hinweis'],
+    help: ['rate <1234> ...... Code raten', 'verlauf .......... bisherige Tipps', 'richtig = Ziffer und Platz stimmen', 'Platz = Ziffer kommt vor, steht aber woanders'],
+    start: function () {
+      var d = '0123456789'.split('');
+      for (var i = d.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = d[i]; d[i] = d[j]; d[j] = t; }
+      mm = { secret: d.slice(0, 4).join(''), tries: [] };
+    },
+    run: level17
   };
 
   /* ---------- Zustand & Speicher ---------- */
@@ -528,7 +639,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   function hostName() {
     if (EXTRA[state.level] && EXTRA[state.level].host) { return EXTRA[state.level].host(); }
-    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway', 'ghost@depot', 'ghost@signal', 'ghost@netz', 'ghost@tresor', 'ghost@funk-8', 'ghost@morse', 'ghost@postfach', 'ghost@verhoer', 'ghost@mainframe'][state.level];
+    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway', 'ghost@depot', 'ghost@signal', 'ghost@netz', 'ghost@tresor', 'ghost@funk-8', 'ghost@morse', 'ghost@postfach', 'ghost@verhoer', 'ghost@mainframe', 'ghost@handy', 'ghost@lizenz', 'ghost@serverraum', 'ghost@zwiebel', 'ghost@tresor-2'][state.level];
   }
 
   function renderStatus() {
@@ -732,6 +843,9 @@ form { display: flex; align-items: center; gap: 8px; }
       printAll(EXTRA[n].intro);
       if (n === 8) { print(''); print(vigenere(L8_PLAIN, L8_KEY, 1), 'cipher'); }
       if (n === 9) { print(''); print(morseText(), 'cipher'); }
+      if (n === 13) { print(''); print(t9Encode(L13_PLAIN), 'cipher'); }
+      if (n === 15) { print(''); describeRoom(); }
+      if (n === 16) { print(''); print(btoa(rot13(L16_PLAIN.split('').reverse().join(''))), 'cipher'); }
     } else if (n === 1) {
       printAll([
         'Ziel: Server NEBULA-7 (frei erfunden).',
@@ -1136,6 +1250,190 @@ form { display: flex; align-items: center; gap: 8px; }
     if (cmd === 'login') {
       if (!arg) { print('Benutzung: login <passwort>', 'warn'); return true; }
       if (arg.trim().toUpperCase() === L12_ANSWER) { solve(12); } else { print('Zugriff verweigert.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function t9Encode(text) {
+    return text.split(' ').map(function (w) {
+      return w.split('').map(function (c) {
+        for (var k in KEYPAD) {
+          if (Object.prototype.hasOwnProperty.call(KEYPAD, k)) {
+            var i = KEYPAD[k].indexOf(c);
+            if (i !== -1) { return new Array(i + 2).join(k); }
+          }
+        }
+        return '';
+      }).join(' ');
+    }).join(' / ');
+  }
+
+  function level13(cmd, arg) {
+    if (cmd === 'sms') { print(t9Encode(L13_PLAIN), 'cipher'); return true; }
+    if (cmd === 'tastatur') {
+      Object.keys(KEYPAD).forEach(function (k) { print('Taste ' + k + ': ' + KEYPAD[k].split('').join(' ')); });
+      return true;
+    }
+    if (cmd === 't9') {
+      var code = arg.trim();
+      if (!/^[2-9 \/]+$/.test(code) || !/[2-9]/.test(code)) { print('Benutzung: t9 <code>   (Ziffern 2-9, Leerzeichen, "/")', 'warn'); return true; }
+      var res = code.split(/\s*\/\s*/).map(function (w) {
+        return w.split(/\s+/).filter(Boolean).map(function (g) {
+          if (!/^(\d)\1*$/.test(g) || !KEYPAD[g.charAt(0)] || g.length > KEYPAD[g.charAt(0)].length) { return '?'; }
+          return KEYPAD[g.charAt(0)].charAt(g.length - 1);
+        }).join('');
+      }).join(' ');
+      print('Ergebnis: ' + res, 'info');
+      return true;
+    }
+    if (cmd === 'wort' || cmd === 'code') {
+      if (!arg) { print('Benutzung: wort <wort>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L13_ANSWER) { solve(13); } else { print('Das ist nicht der Treffpunkt.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function digitSum(text) {
+    return text.replace(/\D/g, '').split('').reduce(function (a, d) { return a + parseInt(d, 10); }, 0);
+  }
+
+  function level14(cmd, arg) {
+    if (cmd === 'beispiele') { print('Gültige Schlüssel:', 'dim'); printAll(L14_EXAMPLES); return true; }
+    if (cmd === 'kandidaten') { print('Prüfe diese Schlüssel:', 'dim'); printAll(L14_CANDIDATES); return true; }
+    if (cmd === 'quersumme') {
+      if (!/\d/.test(arg)) { print('Benutzung: quersumme <schluessel>', 'warn'); return true; }
+      print('Quersumme: ' + arg.replace(/\D/g, '').split('').join(' + ') + ' = ' + digitSum(arg), 'info');
+      return true;
+    }
+    if (cmd === 'aktiviere') {
+      var key = arg.trim();
+      if (!key) { print('Benutzung: aktiviere <schluessel>', 'warn'); return true; }
+      if (key === L14_ANSWER) { solve(14); }
+      else if (L14_CANDIDATES.indexOf(key) !== -1) { print('Ungültig. Dieser Schlüssel folgt nicht der Regel.', 'err'); }
+      else { print('Das ist keiner der Kandidaten.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  var DIRS = { n: 'nord', nord: 'nord', o: 'ost', ost: 'ost', s: 'sued', sued: 'sued', w: 'west', west: 'west' };
+
+  function describeRoom() {
+    var r = L15_ROOMS[adv.room];
+    print(r.name.toUpperCase(), 'head');
+    print(r.text);
+    var here = adv.items[adv.room];
+    if (here.length) { print('Hier liegt: ' + here.join(', '), 'dim'); }
+  }
+
+  function level15(cmd, arg) {
+    var thing = norm(arg).trim();
+    if (cmd === 'umsehen') { describeRoom(); return true; }
+    if (cmd === 'inventar') { print(adv.inv.length ? 'Du trägst: ' + adv.inv.join(', ') : 'Du trägst nichts.', 'info'); return true; }
+    if (cmd === 'gehe' || cmd === 'geh' || cmd === 'go') {
+      var dir = DIRS[thing];
+      if (!dir) { print('Benutzung: gehe <nord|ost|sued|west>', 'warn'); return true; }
+      var room = L15_ROOMS[adv.room];
+      if (adv.room === 'flur' && dir === 'sued') { print('Die Stahltür ist verschlossen. Du brauchst eine Keycard und den Code.', 'err'); return true; }
+      if (!room.exits[dir]) { print('Dort ist eine Wand.', 'err'); return true; }
+      adv.room = room.exits[dir];
+      refresh();
+      describeRoom();
+      return true;
+    }
+    if (cmd === 'nimm') {
+      if (!thing) { print('Benutzung: nimm <ding>', 'warn'); return true; }
+      var here = adv.items[adv.room], i = here.indexOf(thing);
+      if (i === -1) { print('Das gibt es hier nicht.', 'err'); return true; }
+      adv.inv.push(here.splice(i, 1)[0]);
+      print(thing + ' eingesteckt.', 'info');
+      return true;
+    }
+    if (cmd === 'lies' || cmd === 'untersuche') {
+      if (!thing) { print('Benutzung: lies <ding>', 'warn'); return true; }
+      if (adv.inv.indexOf(thing) === -1 && adv.items[adv.room].indexOf(thing) === -1) { print('Das siehst du hier nicht.', 'err'); return true; }
+      print(L15_TEXTS[thing], 'info');
+      return true;
+    }
+    if (cmd === 'benutze') {
+      if (!thing) { print('Benutzung: benutze <ding>', 'warn'); return true; }
+      if (adv.inv.indexOf(thing) === -1) { print('Das hast du nicht dabei.', 'err'); return true; }
+      if (thing === 'keycard') {
+        if (adv.room === 'flur') { adv.card = true; print('Die Karte wird akzeptiert. Der Leser blinkt grün. Jetzt fehlt der Code.', 'info'); }
+        else { print('Hier gibt es keinen Kartenleser.', 'err'); }
+      } else {
+        print('Das bringt dir hier nichts.', 'dim');
+      }
+      return true;
+    }
+    if (cmd === 'code') {
+      if (adv.room !== 'flur') { print('Hier gibt es kein Zahlenschloss.', 'err'); return true; }
+      if (!arg) { print('Benutzung: code <zahl>', 'warn'); return true; }
+      if (!adv.card) { print('Das Schloss reagiert nicht. Der Kartenleser ist noch gesperrt.', 'err'); return true; }
+      if (arg.trim() === L15_CODE) { print('Die Stahltür öffnet sich. Du betrittst den Serverraum.', 'info'); solve(15); }
+      else { print('Falscher Code. Das Schloss piept.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level16(cmd, arg) {
+    if (cmd === 'paket') {
+      print(btoa(rot13(L16_PLAIN.split('').reverse().join(''))), 'cipher');
+      return true;
+    }
+    if (cmd === 'base64') {
+      if (!arg) { print('Benutzung: base64 <text>', 'warn'); return true; }
+      var d = fromBase64(arg);
+      print(d === null ? 'Das ist kein gültiges Base64.' : 'Ergebnis: ' + d, d === null ? 'err' : 'info');
+      return true;
+    }
+    if (cmd === 'rot13') {
+      if (!arg) { print('Benutzung: rot13 <text>', 'warn'); return true; }
+      print('Ergebnis: ' + rot13(arg), 'info');
+      return true;
+    }
+    if (cmd === 'umkehren') {
+      if (!arg) { print('Benutzung: umkehren <text>', 'warn'); return true; }
+      print('Ergebnis: ' + arg.split('').reverse().join(''), 'info');
+      return true;
+    }
+    if (cmd === 'schluessel' || cmd === 'code') {
+      if (!arg) { print('Benutzung: schluessel <wort>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L16_ANSWER) { solve(16); } else { print('Falsches Schlüsselwort.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function mmScore(secret, guess) {
+    var exact = 0, partial = 0;
+    for (var i = 0; i < 4; i++) {
+      if (guess.charAt(i) === secret.charAt(i)) { exact++; }
+      else if (secret.indexOf(guess.charAt(i)) !== -1) { partial++; }
+    }
+    return { exact: exact, partial: partial };
+  }
+
+  function mmLine(t, i) {
+    return '#' + (i + 1) + '  ' + t.guess + '  richtig: ' + t.exact + ', falscher Platz: ' + t.partial;
+  }
+
+  function level17(cmd, arg) {
+    if (cmd === 'verlauf') {
+      if (!mm.tries.length) { print('Noch keine Tipps.', 'dim'); } else { mm.tries.forEach(function (t, i) { print(mmLine(t, i)); }); }
+      return true;
+    }
+    if (cmd === 'rate' || cmd === 'code') {
+      var g = arg.replace(/\s+/g, '');
+      if (!/^\d{4}$/.test(g) || new Set(g.split('')).size !== 4) { print('Benutzung: rate <4 verschiedene Ziffern>   z. B. rate 0123', 'warn'); return true; }
+      var sc = mmScore(mm.secret, g);
+      var t = { guess: g, exact: sc.exact, partial: sc.partial };
+      mm.tries.push(t);
+      if (sc.exact === 4) { print(mmLine(t, mm.tries.length - 1), 'ok'); print('Der Tresor öffnet sich nach ' + mm.tries.length + ' Tipps!', 'info'); solve(17); }
+      else { print(mmLine(t, mm.tries.length - 1), sc.exact + sc.partial === 0 ? 'dim' : 'info'); }
       return true;
     }
     return false;

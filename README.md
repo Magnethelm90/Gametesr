@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst zwölf Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst siebzehn Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -28,7 +28,12 @@ Du bist „Ghost“ und löst zwölf Missionen. Gib Befehle ein oder tippe die K
 | 9 – Das Morsesignal | Übersetze ein Lichtsignal in Morsecode. |
 | 10 – Die Geheimmail | Finde die versteckte Botschaft in harmlosen Mails (Akrostichon). |
 | 11 – Das Alibi | Logikrätsel: Wer von vier Verdächtigen ist der Täter? |
-| 12 – Das Mainframe | Finale: Navigiere mit `ls`, `cd` und `cat` durch ein Dateisystem und finde das versteckte Passwort. |
+| 12 – Das Mainframe | Navigiere mit `ls`, `cd` und `cat` durch ein Dateisystem und finde das versteckte Passwort. |
+| 13 – Die Kurznachricht | Entschlüssele eine SMS aus der Zeit der Handytasten (Multi-Tap). |
+| 14 – Der Lizenzschlüssel | Finde die geheime Regel hinter gültigen Schlüsseln und wähle den richtigen. |
+| 15 – Der Serverraum | Mini-Textadventure: Keycard und Code finden, Tür öffnen. |
+| 16 – Die Zwiebel | Drei Schichten Verschleierung (Base64, ROT13, rückwärts) abtragen. |
+| 17 – Der Tresorcode | Finale: Mastermind mit zufälligem 4-stelligem Code. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
