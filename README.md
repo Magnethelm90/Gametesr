@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst fünfzig Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst 55 Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -39,13 +39,18 @@ Du bist „Ghost“ und löst fünfzig Missionen. Gib Befehle ein oder tippe die
 | 32–35 | Quiz und Zahlen: Zahlenfolgen, Netzwerk-Quiz, Krypto-Quiz, Zahlenraten (binäre Suche). |
 | 36–45 | Knobeln: Lichter aus (3x3 und 4x4), zwei Sudokus, zwei Labyrinthe (eins im Dunkeln), Türme von Hanoi (3 und 4 Scheiben), Streichhölzer gegen den Computer, Wort-Ratespiel. |
 | 46–49 | Praxis: Passwort per Recherche, Firewall-Regeln prüfen, Backup-Archiv im Dateisystem, Textadventure im Gebäude. |
-| 50 – Die große Zwiebel | Finale: vier Schichten, du wählst Werkzeuge und Reihenfolge selbst. |
+| 50 – Die große Zwiebel | Vier Schichten, du wählst Werkzeuge und Reihenfolge selbst. |
+| 51 – Der Passwort-Knacker | Simulation: Wörterbuch-Angriff auf erfundene Hashes. Welche Passwörter sind zu schwach? |
+| 52 – Der Anruf | Gesprächsbaum: Du bist der Verteidiger und erkennst einen Social-Engineering-Anruf. |
+| 53 – Der Aufzug | Transport-Rätsel im Rechenzentrum: Virus, Datei und Backup sicher auf die andere Seite bringen. |
+| 54 – Der Schaltkreis | Logik-Gatter (UND, ODER, NICHT, XOR): Stelle die Schalter so, dass die richtigen Lampen leuchten. |
+| 55 – Operation Dämmerung | Finale: Mini-Kampagne in fünf Kapiteln mit zwei Wegen, Rätseln und einer Gewissensentscheidung. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
 - `hilfe` – Befehlsübersicht
 - `level <n>` – Mission starten (jedes Level schaltet das nächste frei)
-- `menu alle` – alle 50 Level anzeigen (`menu` zeigt nur die nächsten)
+- `menu alle` – alle 55 Level anzeigen (`menu` zeigt nur die nächsten)
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
 - `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)

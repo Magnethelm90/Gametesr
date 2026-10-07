@@ -182,7 +182,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 50;
+  var LEVEL_COUNT = 55;
   var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe', 'Die Kurznachricht', 'Der Lizenzschlüssel', 'Der Serverraum', 'Die Zwiebel', 'Der Tresorcode'];
 
   // Level 1
@@ -1649,11 +1649,321 @@ form { display: flex; align-items: center; gap: 8px; }
 
   reg(50, decodeLevel({
     n: 50, title: 'Die große Zwiebel', host: 'ghost@meister',
-    story: ['Das Finale. Die letzte Nachricht des Meisters wurde mit allem verschleiert, was du kennst.', 'Vier Schichten. Du musst selbst herausfinden, welche und in welcher Reihenfolge. Nicht alle Werkzeuge werden gebraucht.'],
+    story: ['Die letzte Nachricht des Meisters wurde mit allem verschleiert, was du kennst.', 'Vier Schichten. Du musst selbst herausfinden, welche und in welcher Reihenfolge. Nicht alle Werkzeuge werden gebraucht.'],
     plain: 'GRATULATION GHOST DAS PASSWORT LAUTET NULLPUNKT', layers: [{ t: 'umkehren' }, { t: 'shift', a: '11' }, { t: 'hex' }, { t: 'base64' }],
     tools: ['base64', 'hex', 'shift', 'umkehren', 'atbash', 'rot13', 'key', 'xor', 'bin', 'zahlen'], answer: 'NULLPUNKT',
     hints: ['Die äußerste Schicht sieht aus wie Base64: Buchstaben, Ziffern und eventuell "=" am Ende.', 'Danach kommen Hex-Zahlen. Danach ein Caesar-Verschiebung (probiere shift mit verschiedenen Zahlen, richtig ist die, bei der Wörter erkennbar werden).', 'Die letzte Schicht ist rückwärts geschriebener Text. Reihenfolge: base64, hex, shift 11, umkehren.']
   }));
+
+  /* ---------- Level 51-55: neue Spielmechaniken ---------- */
+
+  /* 51: Passwort-Knacker-Simulation (Woerterbuch-Angriff auf erfundene Hashes) */
+
+  function ghostHash(s) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return ('00000000' + (h >>> 0).toString(16)).slice(-8);
+  }
+  var L51_USERS = [
+    { n: 'anna', pw: 'sommer2020' }, { n: 'ben', pw: 'k7Qv9zLm2x' },
+    { n: 'carla', pw: 'passwort1' }, { n: 'dennis', pw: 'Zx9!wQ#4tL' }
+  ];
+  var L51_LIST = ['123456', 'passwort', 'passwort1', 'hallo123', 'qwertz', 'sommer2020', 'letmein', 'admin123', 'iloveyou', 'fussball',
+    'dragon', 'sonne123', 'monkey', 'abc123', 'winter2021', 'schatz', 'master', 'welcome1', 'test1234', 'computer'];
+  var L51_ANSWER = ['anna', 'carla'];
+
+  reg(51, {
+    title: 'Der Passwort-Knacker', host: 'ghost@hashlab',
+    hints: ['Ein Hash ist eine Einbahnstraße: Man kann ihn nicht zurückrechnen, aber man kann Wörter hashen und die Ergebnisse vergleichen.', 'Mit "hash <wort>" siehst du den Hash eines Wortes. Ist er gleich dem Hash eines Nutzers, kennst du dessen Passwort.', '"knacke" probiert die ganze Liste bei allen Nutzern durch. Melde danach alle Nutzer, deren Passwort in der Liste stand.'],
+    chips: [{ c: 'hashes' }, { c: 'liste' }, { c: 'hash ', fill: true }, { c: 'knacke' }, { c: 'melde ', fill: true }],
+    help: ['hashes ........... Hashes der Nutzer anzeigen', 'liste ............ Wörterbuch mit häufigen Passwörtern', 'hash <wort> ...... Hash eines Wortes berechnen', 'knacke ........... Wörterbuch-Angriff starten', 'melde <namen> .... Nutzer mit schwachem Passwort melden'],
+    intro: ['Du bist Sicherheitsprüfer bei einer (erfundenen) Firma. Du hast die Passwort-Hashes der Nutzer, nicht die Passwörter.', 'Teste mit einem Wörterbuch, welche Passwörter zu schwach sind. Das ist eine Simulation mit einem erfundenen Hash-Verfahren.', '', 'Befehle: hashes, liste, hash <wort>, knacke, melde <namen>, hinweis'],
+    run: function (cmd, arg) {
+      if (cmd === 'hashes') { L51_USERS.forEach(function (u) { print(u.n + repeatStr(' ', 8 - u.n.length) + ghostHash(u.pw), 'logline'); }); return true; }
+      if (cmd === 'liste') { print(L51_LIST.join('  '), 'logline'); print(L51_LIST.length + ' Wörter.', 'dim'); return true; }
+      if (cmd === 'hash') {
+        if (!arg) { print('Benutzung: hash <wort>', 'warn'); return true; }
+        print('hash("' + arg + '") = ' + ghostHash(arg), 'info');
+        return true;
+      }
+      if (cmd === 'knacke') {
+        var found = [];
+        L51_USERS.forEach(function (u) {
+          var h = ghostHash(u.pw), i = -1;
+          for (var k = 0; k < L51_LIST.length; k++) { if (ghostHash(L51_LIST[k]) === h) { i = k; break; } }
+          if (i !== -1) { found.push(u.n); print(u.n + ': GEKNACKT, Passwort "' + L51_LIST[i] + '" (Versuch ' + (i + 1) + ')', 'warn'); }
+          else { print(u.n + ': nicht gefunden (' + L51_LIST.length + ' Versuche)', 'ok'); }
+        });
+        print('Merke: Lange, zufällige Passwörter stehen in keinem Wörterbuch. Kurze oder bekannte Wörter fallen sofort.', 'dim');
+        return true;
+      }
+      if (cmd === 'melde') {
+        var names = norm(arg).split(/[^a-z]+/).filter(Boolean).sort();
+        if (!names.length) { print('Benutzung: melde <name> <name> ...', 'warn'); return true; }
+        if (names.length === L51_ANSWER.length && names.every(function (x, i) { return x === L51_ANSWER[i]; })) { solve(51); }
+        else { print('Das stimmt nicht ganz. Starte "knacke" und melde genau die Nutzer, die geknackt wurden.', 'err'); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 52: Social Engineering, Gespraechsbaum (du bist der Verteidiger am Telefon) */
+
+  var L52_NODES = {
+    n0: { say: 'Das Telefon klingelt. Eine freundliche Stimme: "Hallo, hier ist Marco aus der IT. Wir haben ein Sicherheitsproblem mit Ihrem Konto. Ich brauche sofort Ihr Passwort, um es zu retten!"',
+      opts: [
+        { t: 'Okay, mein Passwort lautet ...', lose: 'Falsch. Passwörter nennt man niemals am Telefon. Der Anrufer hat jetzt Zugriff auf dein Konto.' },
+        { t: 'Moment. Ich rufe Sie unter der offiziellen IT-Nummer zurück.', go: 'n1' },
+        { t: 'Wer sind Sie? Nennen Sie mir Ihre Personalnummer.', go: 'n2' },
+        { t: 'Ich lege einfach auf.', go: 'n3' }
+      ] },
+    n1: { say: 'Der Anrufer wird nervös: "Dafür ist keine Zeit! Ihr Konto wird in 5 Minuten gesperrt!"',
+      opts: [
+        { t: 'Dann nenne ich es eben schnell.', lose: 'Falsch. Zeitdruck ist ein klassisches Warnsignal für Betrug.' },
+        { t: 'Zeitdruck ist ein Warnsignal. Ich lege auf und rufe die offizielle IT an.', go: 'n4' },
+        { t: 'Schicken Sie mir einen Link, den ich anklicke.', lose: 'Falsch. Unbekannte Links können Schadsoftware oder gefälschte Anmeldeseiten sein.' }
+      ] },
+    n2: { say: '"Personalnummer 4711. Aber das dauert zu lange, ich brauche das Passwort jetzt!"',
+      opts: [
+        { t: 'Gut, hier ist es.', lose: 'Falsch. Eine Nummer kann jeder nennen.' },
+        { t: 'Eine Nummer kann jeder behaupten. Ich prüfe das über die offizielle IT-Nummer.', go: 'n4' },
+        { t: 'Ich nenne Ihnen nur die ersten drei Zeichen.', lose: 'Falsch. Auch Teile eines Passworts helfen Angreifern.' }
+      ] },
+    n3: { say: 'Du hast aufgelegt. Eine Minute später klingelt es bei deiner Kollegin am Nachbartisch.',
+      opts: [
+        { t: 'Nichts weiter tun.', lose: 'Falsch. Deine Kollegen bleiben ungewarnt und werden die nächsten Opfer.' },
+        { t: 'Den Vorfall der IT-Sicherheit melden und die Kollegen warnen.', win: true }
+      ] },
+    n4: { say: 'Du rufst die offizielle IT an. Sie bestätigt: Das war ein Betrugsversuch.',
+      opts: [
+        { t: 'Gut, Fall erledigt. Weiterarbeiten.', lose: 'Fast. Ohne Meldung können die Betrüger es bei anderen weiter versuchen.' },
+        { t: 'Den Anruf melden, die Kollegen warnen und vorsichtshalber das Passwort ändern.', win: true }
+      ] }
+  };
+  var anruf = { node: 'n0' };
+
+  function anrufShow() {
+    var n = L52_NODES[anruf.node];
+    print('');
+    print(n.say, 'info');
+    n.opts.forEach(function (o, i) { print((i + 1) + ') ' + o.t); });
+  }
+
+  reg(52, {
+    title: 'Der Anruf', host: 'ghost@telefon',
+    hints: ['Du bist hier der Verteidiger. Frage dich bei jeder Antwort: Würde ein echter Mitarbeiter der IT das verlangen?', 'Echte IT-Mitarbeiter fragen niemals nach deinem Passwort und setzen dich nicht unter Zeitdruck.', 'Richtig ist: nichts verraten, die Identität über einen bekannten Weg prüfen und den Vorfall melden.'],
+    chips: [{ c: '1' }, { c: '2' }, { c: '3' }, { c: '4' }, { c: 'neu' }],
+    help: ['1 2 3 4 ............ Antwort wählen (oder "wahl <n>")', 'neu .............. das Gespräch von vorn beginnen'],
+    intro: ['Ein Anruf am Arbeitsplatz. Du bist ein Mitarbeiter der (erfundenen) Nordlicht GmbH.', 'Wähle jeweils eine Antwort, indem du die Nummer eingibst. Ziel: das Gespräch richtig beenden.', '', 'Befehle: 1, 2, 3, 4 (oder wahl <n>), neu, hinweis'],
+    start: function () { anruf.node = 'n0'; },
+    after: anrufShow,
+    run: function (cmd, arg) {
+      if (cmd === 'neu') { anruf.node = 'n0'; anrufShow(); return true; }
+      var k = cmd === 'wahl' ? parseInt(arg, 10) : (/^\d$/.test(cmd) ? parseInt(cmd, 10) : NaN);
+      if (cmd !== 'wahl' && isNaN(k)) { return false; }
+      var node = L52_NODES[anruf.node];
+      if (!(k >= 1 && k <= node.opts.length)) { print('Wähle eine Zahl von 1 bis ' + node.opts.length + '.', 'warn'); return true; }
+      var o = node.opts[k - 1];
+      if (o.lose) { print(o.lose, 'err'); print('Das Gespräch beginnt von vorn.', 'dim'); anruf.node = 'n0'; anrufShow(); return true; }
+      if (o.win) { print('Genau richtig! Du hast den Betrugsversuch erkannt und richtig gehandelt.', 'info'); solve(52); return true; }
+      anruf.node = o.go;
+      anrufShow();
+      return true;
+    }
+  });
+
+  /* 53: Fluss-Raetsel im Rechenzentrum */
+
+  var elev = { items: { left: [], right: [] }, admin: 'left' };
+  var ELEV_BAD = [['virus', 'datei'], ['datei', 'backup']];
+
+  function elevReset() { elev = { items: { left: ['virus', 'datei', 'backup'], right: [] }, admin: 'left' }; }
+  function elevShow() {
+    var side = function (s) { return (elev.admin === s ? '[Admin] ' : '        ') + (elev.items[s].join(' ') || '-'); };
+    print('Links:  ' + side('left'), 'logline');
+    print('~~~~~~~~~~ Aufzug ~~~~~~~~~~', 'dim');
+    print('Rechts: ' + side('right'), 'logline');
+  }
+  function elevCheck() {
+    var other = elev.admin === 'left' ? 'right' : 'left', here = elev.items[other];
+    for (var i = 0; i < ELEV_BAD.length; i++) {
+      if (here.indexOf(ELEV_BAD[i][0]) !== -1 && here.indexOf(ELEV_BAD[i][1]) !== -1) { return ELEV_BAD[i]; }
+    }
+    return null;
+  }
+
+  reg(53, {
+    title: 'Der Aufzug', host: 'ghost@aufzug',
+    hints: ['Der Aufzug trägt den Admin und höchstens ein Ding. Allein darf er auch fahren.', 'Die Datei muss immer mit jemandem zusammen sein, der sie schützt: Allein mit Virus oder Backup geht es schief.', 'Beginne mit der Datei. Dann kommt der Admin allein zurück. Du darfst Dinge auch wieder zurückbringen.']
+    ,
+    chips: [{ c: 'brett' }, { c: 'bringe virus' }, { c: 'bringe datei' }, { c: 'bringe backup' }, { c: 'allein' }, { c: 'neu' }],
+    help: ['brett ............. Lage anzeigen', 'bringe <ding> .... mit dem Aufzug auf die andere Seite fahren (virus, datei, backup)', 'allein ........... der Admin fährt ohne etwas', 'neu .............. von vorn beginnen'],
+    intro: ['Im Rechenzentrum soll ein Admin drei Dinge in den sicheren Raum auf der rechten Seite bringen: Virus-Probe, Datei und Backup.', 'Der Aufzug trägt den Admin und nur ein Ding. Wenn der Admin nicht dabei ist, gilt:', '  Virus + Datei zusammen: das Virus infiziert die Datei.', '  Datei + Backup zusammen: die Datei überschreibt das Backup.', '', 'Befehle: brett, bringe <ding>, allein, neu, hinweis'],
+    start: elevReset,
+    after: function () { print(''); elevShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'brett') { elevShow(); return true; }
+      if (cmd === 'neu') { elevReset(); elevShow(); return true; }
+      if (cmd === 'bringe' || cmd === 'allein') {
+        var from = elev.admin, to = from === 'left' ? 'right' : 'left';
+        if (cmd === 'bringe') {
+          var thing = norm(arg).trim(), i = elev.items[from].indexOf(thing);
+          if (!thing) { print('Benutzung: bringe <virus|datei|backup>', 'warn'); return true; }
+          if (i === -1) { print('Das ist nicht auf der Seite des Admins.', 'err'); return true; }
+          elev.items[to].push(elev.items[from].splice(i, 1)[0]);
+        }
+        elev.admin = to;
+        elevShow();
+        var bad = elevCheck();
+        if (bad) {
+          print('Katastrophe: ' + (bad[0] === 'virus' ? 'Das Virus hat die Datei infiziert.' : 'Die Datei hat das Backup überschrieben.') + ' Neuer Versuch.', 'err');
+          elevReset(); elevShow();
+          return true;
+        }
+        if (elev.items.right.length === 3) { print('Alles ist sicher auf der rechten Seite!', 'info'); solve(53); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 54: Schaltkreis mit Logik-Gattern */
+
+  var circ = { A: 0, B: 0, C: 0, D: 0 };
+  function circLamps() {
+    var A = circ.A, B = circ.B, C = circ.C, D = circ.D;
+    return [(A && B) || (C && !D) ? 1 : 0, A ^ C ? 1 : 0, !(B && D) ? 1 : 0];
+  }
+  function circShow() {
+    var l = circLamps();
+    print('Schalter: A=' + (circ.A ? 'AN ' : 'AUS') + '  B=' + (circ.B ? 'AN ' : 'AUS') + '  C=' + (circ.C ? 'AN ' : 'AUS') + '  D=' + (circ.D ? 'AN' : 'AUS'), 'logline');
+    print('Lampen:   1=' + (l[0] ? 'AN ' : 'AUS') + '  2=' + (l[1] ? 'AN ' : 'AUS') + '  3=' + (l[2] ? 'AN' : 'AUS') + '   (Ziel: 1 AN, 2 AUS, 3 AN)', 'logline');
+  }
+
+  reg(54, {
+    title: 'Der Schaltkreis', host: 'ghost@schaltkreis',
+    hints: ['Lies den Plan. UND bedeutet: beide Schalter müssen an sein. ODER: mindestens einer. NICHT dreht um. XOR: genau einer von beiden.', 'Lampe 2 soll AUS sein: Dann müssen A und C gleich stehen (beide an oder beide aus).', 'Lampe 3 verlangt: B und D nicht beide an. Für Lampe 1 hilft (A UND B) oder (C UND NICHT D). Probiere A und C an, D aus.'],
+    chips: [{ c: 'plan' }, { c: 'zustand' }, { c: 'kippe a' }, { c: 'kippe b' }, { c: 'kippe c' }, { c: 'kippe d' }, { c: 'neu' }],
+    help: ['plan .............. Schaltplan mit Gattern anzeigen', 'zustand .......... Schalter und Lampen anzeigen', 'kippe <a-d> ...... Schalter umlegen', 'neu .............. alle Schalter aus'],
+    intro: ['Ein Schaltpult mit 4 Schaltern (A bis D) und 3 Lampen. Jede Lampe hängt über Logik-Gatter an den Schaltern.', 'Stelle die Schalter so, dass Lampe 1 und 3 leuchten und Lampe 2 aus ist.', '', 'Befehle: plan, zustand, kippe <a-d>, neu, hinweis'],
+    start: function () { circ = { A: 0, B: 0, C: 0, D: 0 }; },
+    after: function () { print(''); circShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'plan') {
+        printAll(['Lampe 1 = (A UND B) ODER (C UND NICHT D)', 'Lampe 2 = A XOR C     (genau einer von beiden an)', 'Lampe 3 = NICHT (B UND D)', 'Ziel: Lampe 1 AN, Lampe 2 AUS, Lampe 3 AN'], 'logline');
+        return true;
+      }
+      if (cmd === 'zustand') { circShow(); return true; }
+      if (cmd === 'neu') { circ = { A: 0, B: 0, C: 0, D: 0 }; circShow(); return true; }
+      if (cmd === 'kippe') {
+        var k = norm(arg).trim().toUpperCase();
+        if (!/^[A-D]$/.test(k)) { print('Benutzung: kippe <a|b|c|d>', 'warn'); return true; }
+        circ[k] ^= 1;
+        circShow();
+        var l = circLamps();
+        if (l[0] === 1 && l[1] === 0 && l[2] === 1) { print('Das Ziel ist erreicht: Das Pult entsperrt sich!', 'info'); solve(54); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 55: Mini-Kampagne "Operation Daemmerung" (verzweigt, Finale) */
+
+  var camp = { stage: 'k1', path: '' };
+  var K2B_PLAIN = 'DER ZUGANG IST BRUECKE';
+  var K5_WORDS = { A: 'LIEFERANT', B: 'GAESTENETZ' };
+  var CAMP = {
+    k1: {
+      text: function () { return ['Kapitel 1 von 5: Der Einstieg.', 'Marta (Funk): "Ghost, wie willst du ins Gebäude? Laut Auftrag sind beide Wege erlaubt."']; },
+      opts: [{ t: 'Durch den Lieferanteneingang', go: 'k2a', path: 'A' }, { t: 'Über das Gäste-WLAN', go: 'k2b', path: 'B' }],
+      tip: 'Beide Wege sind möglich. Dein Weg bestimmt, welche Aufgabe in Kapitel 2 kommt und wie am Ende das Codewort lautet.'
+    },
+    k2a: {
+      text: function () { return ['Kapitel 2 von 5: Das Zahlenschloss.', 'Am Lieferanteneingang hängt ein Zahlenschloss. Auf einem Zettel daneben steht: 3, 6, 12, 24, ...', 'Der Türcode ist die nächste Zahl.']; },
+      answer: function (a) { return a.trim() === '48'; }, next: 'k3', ok: 'Die Tür springt auf.', tip: 'Jede Zahl ist das Doppelte der vorigen.'
+    },
+    k2b: {
+      text: function () { return ['Kapitel 2 von 5: Die Nachricht.', 'Im Gäste-WLAN fängst du eine Nachricht des Admins ab, verschlüsselt mit einer Caesar-Chiffre:', caesar(K2B_PLAIN, 5), 'Werkzeug: shift <1-25>. Das letzte Wort ist das Passwort.']; },
+      answer: function (a) { return squash(a) === 'BRUECKE'; }, next: 'k3', ok: 'Du bist im Netz.', tip: 'Probiere shift mit verschiedenen Zahlen, bis ein deutscher Satz entsteht.'
+    },
+    k3: {
+      text: function () { return ['Kapitel 3 von 5: Die drei Türen.', 'Nur hinter einer Tür liegt der Serverraum (A, B oder C). Drei Schilder hängen daran:', '  A: "Der Server ist hinter B."', '  B: "Der Server ist nicht hinter B."', '  C: "Der Server ist nicht hinter A."', 'Genau EIN Schild sagt die Wahrheit. Hinter welcher Tür liegt der Server?']; },
+      answer: function (a) { return norm(a).trim() === 'a'; }, next: 'k4', ok: 'Dahinter liegt der Serverraum.', tip: 'Probiere jede Tür als Serverraum durch und zähle die wahren Schilder. Es darf genau eins sein.'
+    },
+    k4: {
+      text: function () { return ['Kapitel 4 von 5: Die Entscheidung.', 'Im Serverraum findest du neben den Zielsystemen einen Ordner "Privat_Mitarbeiter" mit Gehaltsdaten und Krankmeldungen. Er gehört NICHT zum Auftrag. Was tust du?']; },
+      opts: [
+        { t: 'Kopieren, die Daten könnten nützlich sein.', lose: 'Falsch. Alles außerhalb des Auftrags ist tabu. Kopieren wäre ein Vertrauensbruch, vielleicht sogar eine Straftat.' },
+        { t: 'Nicht öffnen und den Fund im Bericht als Sicherheitsproblem melden.', go: 'k5' },
+        { t: 'Nur kurz reinschauen, aber nichts kopieren.', lose: 'Falsch. Schon das Ansehen überschreitet den Auftrag.' }
+      ],
+      tip: 'Ein Test mit Erlaubnis hat klare Grenzen. Was nicht im Auftrag steht, fasst man nicht an.'
+    },
+    k5: {
+      text: function () { return ['Kapitel 5 von 5: Der Abschluss.', 'Marta (Funk): "Gute Arbeit. Das Abschluss-Codewort für den Bericht, verschlüsselt:"', rot13(K5_WORDS[camp.path]), 'Werkzeug: rot13. Gib das Wort mit "antwort <wort>" ein.']; },
+      answer: function (a) { return squash(a) === K5_WORDS[camp.path]; }, next: null, ok: 'Der Bericht ist abgeschickt.', tip: 'ROT13 wirkt in beide Richtungen: Wende rot13 auf das Codewort an.'
+    }
+  };
+
+  function campShow() {
+    var s = CAMP[camp.stage];
+    print('');
+    s.text().forEach(function (l, i) { print(l, l.indexOf('Kapitel') === 0 ? 'head' : (/^[A-Z ]{8,}$/.test(l) ? 'cipher' : '')); });
+    if (s.opts) { s.opts.forEach(function (o, i) { print((i + 1) + ') ' + o.t); }); }
+  }
+
+  reg(55, {
+    title: 'Operation Dämmerung', host: 'ghost@dämmerung'.replace('ä', 'ae'),
+    hints: ['Das Finale hat fünf Kapitel. Lies jedes genau. Manche Kapitel haben eigene Werkzeuge (shift, rot13).', 'Mit "tipp" bekommst du einen Hinweis zum aktuellen Kapitel.', 'Dein Weg in Kapitel 1 bestimmt Kapitel 2 und das Codewort am Ende. Mit "neu" kannst du die andere Route ausprobieren.'],
+    chips: function () {
+      var s = CAMP[camp.stage], c = [];
+      if (s.opts) { s.opts.forEach(function (o, i) { c.push({ c: String(i + 1) }); }); } else { c.push({ c: 'antwort ', fill: true }); }
+      if (camp.stage === 'k2b') { c.push({ c: 'shift ', fill: true }); }
+      if (camp.stage === 'k5') { c.push({ c: 'rot13 ', fill: true }); }
+      return c.concat([{ c: 'text' }, { c: 'tipp' }, { c: 'neu' }]);
+    },
+    help: ['1 2 3 ............. Antwort wählen (oder "wahl <n>")', 'antwort <text> ... Aufgabe beantworten', 'shift / rot13 .... Werkzeuge (nur in manchen Kapiteln)', 'text ............. aktuelles Kapitel anzeigen', 'tipp ............. Hinweis zum Kapitel', 'neu .............. Kampagne von vorn'],
+    intro: ['DAS GROSSE FINALE: OPERATION DÄMMERUNG', 'Du bist Ghost, Mitglied einer "roten Gruppe". Mit schriftlichem Auftrag testest du die Sicherheit der (erfundenen) Nordlicht GmbH.', 'Deine Kontaktperson Marta begleitet dich per Funk. Fünf Kapitel, zwei mögliche Wege.', '', 'Befehle: 1, 2, ... (oder wahl <n>), antwort <text>, text, tipp, neu'],
+    start: function () { camp = { stage: 'k1', path: '' }; },
+    after: campShow,
+    run: function (cmd, arg) {
+      var s = CAMP[camp.stage];
+      if (cmd === 'neu') { camp = { stage: 'k1', path: '' }; campShow(); return true; }
+      if (cmd === 'text' || cmd === 'kapitel') { campShow(); return true; }
+      if (cmd === 'tipp') { print(s.tip, 'warn'); return true; }
+      if (camp.stage === 'k2b' && cmd === 'shift') {
+        var n = /^\d+$/.test(arg) ? +arg : 0;
+        if (n < 1 || n > 25) { print('Benutzung: shift <1-25>', 'warn'); return true; }
+        print('shift ' + n + ': ' + caesar(caesar(K2B_PLAIN, 5), -n), 'info');
+        return true;
+      }
+      if (camp.stage === 'k5' && cmd === 'rot13') {
+        if (!arg) { print('Benutzung: rot13 <text>', 'warn'); return true; }
+        print('Ergebnis: ' + rot13(arg), 'info');
+        return true;
+      }
+      if (s.opts && (cmd === 'wahl' || /^\d$/.test(cmd))) {
+        var k = cmd === 'wahl' ? parseInt(arg, 10) : parseInt(cmd, 10);
+        if (!(k >= 1 && k <= s.opts.length)) { print('Wähle eine Zahl von 1 bis ' + s.opts.length + '.', 'warn'); return true; }
+        var o = s.opts[k - 1];
+        if (o.lose) { print(o.lose, 'err'); print('Triff die Entscheidung noch einmal.', 'dim'); campShow(); return true; }
+        if (o.path) { camp.path = o.path; }
+        camp.stage = o.go;
+        campShow();
+        return true;
+      }
+      if (s.answer && (cmd === 'antwort' || cmd === 'a')) {
+        if (!arg) { print('Benutzung: antwort <text>', 'warn'); return true; }
+        if (!s.answer(arg)) { print('Das stimmt nicht. Versuche es noch einmal (oder "tipp").', 'err'); return true; }
+        print(s.ok, 'info');
+        if (s.next) { camp.stage = s.next; campShow(); } else { solve(55); }
+        return true;
+      }
+      return false;
+    }
+  });
 
   /* ---------- Zustand & Speicher ---------- */
 
@@ -1839,7 +2149,7 @@ form { display: flex; align-items: center; gap: 8px; }
     }
     var base;
     if (EXTRA[state.level]) {
-      base = EXTRA[state.level].chips;
+      base = typeof EXTRA[state.level].chips === 'function' ? EXTRA[state.level].chips() : EXTRA[state.level].chips;
     } else if (state.level === 1) {
       base = [
         { c: 'dateien' }, { c: 'lies notiz.txt' }, { c: 'lies profil.txt' },
