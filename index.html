@@ -182,7 +182,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 60;
+  var LEVEL_COUNT = 80;
   var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe', 'Die Kurznachricht', 'Der Lizenzschlüssel', 'Der Serverraum', 'Die Zwiebel', 'Der Tresorcode'];
 
   // Level 1
@@ -2212,6 +2212,345 @@ form { display: flex; align-items: center; gap: 8px; }
       return false;
     }
   });
+
+  /* ---------- Level 61-80 ---------- */
+
+  /* zusaetzliche Werkzeuge fuer die Chiffre-Werkstatt */
+  function morseEnc(t) {
+    return t.split(' ').map(function (w) { return w.split('').map(function (c) { return MORSE[c]; }).join(' '); }).join(' / ');
+  }
+  function morseDec(t) {
+    if (!/^[.\-\/ ]+$/.test(t)) { return null; }
+    var rev = {}, bad = false;
+    Object.keys(MORSE).forEach(function (l) { rev[MORSE[l]] = l; });
+    var r = t.trim().split(/\s*\/\s*/).map(function (w) {
+      return w.split(/\s+/).map(function (c) { if (!rev.hasOwnProperty(c)) { bad = true; return '?'; } return rev[c]; }).join('');
+    }).join(' ');
+    return bad ? null : r;
+  }
+  function t9Dec(t) {
+    if (!/^[2-9 \/]+$/.test(t) || !/[2-9]/.test(t)) { return null; }
+    var bad = false;
+    var r = t.split(/\s*\/\s*/).map(function (w) {
+      return w.split(/\s+/).filter(Boolean).map(function (g) {
+        if (!/^(\d)\1*$/.test(g) || g.length > KEYPAD[g.charAt(0)].length) { bad = true; return '?'; }
+        return KEYPAD[g.charAt(0)].charAt(g.length - 1);
+      }).join('');
+    }).join(' ');
+    return bad ? null : r;
+  }
+  TOOLS.morse = { d: 'Morsecode (Punkte und Striche) in Text', enc: morseEnc, dec: morseDec };
+  TOOLS.t9 = { d: 'Handytasten-Ziffern (mehrfach tippen) in Text', enc: t9Encode, dec: t9Dec };
+
+  reg(61, decodeLevel({
+    n: 61, title: 'Das Leuchtfeuer', host: 'ghost@leuchtfeuer',
+    story: ['Ein Leuchtturm blinkt eine Nachricht, aber das Alphabet dahinter wurde zusätzlich gespiegelt.', 'Zwei Schichten. Finde das Lösungswort.'],
+    plain: 'DAS PASSWORT IST SEEFAHRER', layers: [{ t: 'atbash' }, { t: 'morse' }], tools: ['morse', 'atbash', 'umkehren', 'rot13'], answer: 'SEEFAHRER',
+    hints: ['Punkte und Striche sind Morsecode. Das Werkzeug "morse" übersetzt sie.', 'Danach ergibt der Text keinen Sinn: Das Alphabet wurde gespiegelt. Probiere "atbash".', 'Reihenfolge: morse, atbash.']
+  }));
+  reg(62, decodeLevel({
+    n: 62, title: 'Die Kurznachricht II', host: 'ghost@handy-2',
+    story: ['Eine alte SMS, die zusätzlich mit ROT13 verschleiert wurde.', 'Finde das Lösungswort.'],
+    plain: 'DAS PASSWORT IST REGENBOGEN', layers: [{ t: 'rot13' }, { t: 't9' }], tools: ['t9', 'rot13', 'atbash', 'zahlen'], answer: 'REGENBOGEN',
+    hints: ['Ziffern wie 7777 sind Handytasten: 7 steht für PQRS, die Anzahl bestimmt den Buchstaben.', '"t9" übersetzt die Ziffern. Der Text wirkt danach noch seltsam.', 'Wende danach "rot13" an.']
+  }));
+  reg(63, decodeLevel({
+    n: 63, title: 'Der Bit-Zaun', host: 'ghost@bitzaun',
+    story: ['Bits, hinter denen eine Zaunschiene steckt. Zwei Schichten.', 'Finde das Lösungswort.'],
+    plain: 'DAS PASSWORT IST BERGKRISTALL', layers: [{ t: 'zaun' }, { t: 'bin' }], tools: ['bin', 'zaun', 'hex', 'ascii', 'umkehren'], answer: 'BERGKRISTALL',
+    hints: ['Nullen und Einsen in Achtergruppen sind Zeichen: "bin" wandelt sie um.', 'Danach ist der Text durcheinander. Es wurde im Zickzack auf zwei Reihen geschrieben.', 'Reihenfolge: bin, zaun.']
+  }));
+  reg(64, decodeLevel({
+    n: 64, title: 'Das Nachtwort', host: 'ghost@nachtwort',
+    story: ['Eine Nachricht mit Schlüsselwort (Vigenère), zusätzlich als Base64 verpackt.', 'Das Schlüsselwort steht in einer Notiz als Rätsel.'],
+    plain: 'DAS PASSWORT IST MONDSILBER', layers: [{ t: 'key', a: 'NACHT' }, { t: 'base64' }], tools: ['base64', 'key', 'shift', 'atbash', 'rot13'], answer: 'MONDSILBER',
+    note: ['Notiz des Funkers:', '  "Das Schlüsselwort folgt auf den Tag und kommt vor dem Morgen. (5 Buchstaben)"'],
+    hints: ['Zuerst die äußere Schicht: Das sieht nach Base64 aus.', 'Danach braucht es das Schlüsselwort: Was folgt auf den Tag? "key <wort>" probiert es.', 'Reihenfolge: base64, key NACHT.']
+  }));
+  reg(65, decodeLevel({
+    n: 65, title: 'Die lange Kette', host: 'ghost@kette',
+    story: ['Drei Schichten: Hex, ein Zahlengitter und ein gespiegeltes Alphabet.', 'Nicht alle Werkzeuge werden gebraucht.'],
+    plain: 'DAS PASSWORT IST FELSENBURG', layers: [{ t: 'atbash' }, { t: 'polybius' }, { t: 'hex' }], tools: ['hex', 'polybius', 'atbash', 'zahlen', 'base64', 'umkehren'], answer: 'FELSENBURG',
+    hints: ['Ziffern und die Buchstaben a bis f sind Hex: "hex" zuerst.', 'Danach stehen Zahlenpaare (Zeile, Spalte im 5x5-Gitter): "polybius".', 'Zum Schluss ist der Text gespiegelt: "atbash".']
+  }));
+  reg(66, decodeLevel({
+    n: 66, title: 'Der XOR-Meister', host: 'ghost@xor-2',
+    story: ['Wieder XOR, diesmal in einer Base64-Hülle. Der Schlüssel ist ein Buchstabe.', 'Die Notiz verrät ihn.'],
+    plain: 'DAS PASSWORT IST SILBERFADEN', layers: [{ t: 'xor', a: 'M' }, { t: 'base64' }], tools: ['base64', 'hex', 'xor', 'atbash'], answer: 'SILBERFADEN',
+    note: ['Fundstück:', '  "Schlüssel = der 13. Buchstabe des Alphabets."'],
+    hints: ['Die äußere Schicht ist Base64: "base64".', 'Danach stehen Hex-Bytes. Der Schlüssel ist der 13. Buchstabe: A=1 ... M=13.', 'Reihenfolge: base64, xor M.']
+  }));
+
+  reg(67, quizLevel({
+    n: 67, title: 'Das Hardware-Quiz', host: 'ghost@hardware',
+    story: ['Ein Techniker fragt dich Grundlagen der Computer-Hardware ab.'],
+    questions: [
+      { q: 'Wie viele Bit hat ein Byte?', a: ['8'] }, { q: 'CPU steht für Central Processing ... (ein Wort, englisch)?', a: ['unit'] },
+      { q: 'RAM steht für Random Access ... (ein Wort, englisch)?', a: ['memory'] }, { q: 'Wie heißt der kleinste Bildpunkt auf einem Bildschirm? (ein Wort)', a: ['pixel'] },
+      { q: 'USB steht für Universal Serial ... (ein Wort, englisch)?', a: ['bus'] }, { q: 'Was ist größer: ein Megabyte oder ein Gigabyte?', a: ['gigabyte'] },
+      { q: 'Wie nennt man Windows, Linux und macOS allgemein? (ein Wort)', a: ['betriebssystem'] }
+    ],
+    hints: ['Das sind Grundlagen. Eine Suchmaschine hilft, falls du bei einer Frage unsicher bist.', 'Mega kommt vor Giga.', 'Bei den Abkürzungen fehlt jeweils das letzte Wort.']
+  }));
+  reg(68, quizLevel({
+    n: 68, title: 'Das Sicherheits-Quiz', host: 'ghost@sicherheit',
+    story: ['Eine Sicherheitsschulung: Zeig, dass du die Grundregeln kennst.'],
+    questions: [
+      { q: '2FA steht für Zwei-...-Authentifizierung. Welches Wort fehlt? (ein Wort)', a: ['faktor'] },
+      { q: 'Wie nennt man Schadsoftware, die Dateien verschlüsselt und Lösegeld verlangt? (ein Wort, englisch)', a: ['ransomware'] },
+      { q: 'Wie nennt man ein Programm, das nützlich aussieht, aber heimlich Schaden anrichtet, nach einem Pferd aus der Sage? (ein Wort)', a: ['trojaner', 'trojan', 'trojanisches pferd'] },
+      { q: 'Welche Verbindung ist verschlüsselt: HTTP oder HTTPS?', a: ['https'] },
+      { q: 'Wie nennt man regelmäßige Sicherungskopien deiner Daten? (ein Wort, englisch)', a: ['backup'] },
+      { q: 'Sollte man dasselbe Passwort für alle Konten nutzen? (ja oder nein)', a: ['nein'] },
+      { q: 'Wie nennt man eine Sicherheitslücke, für die es noch keinen Patch gibt? (zwei Wörter, englisch: ... Day)', a: ['zero day', '0 day'] }
+    ],
+    hints: ['Das sind Grundregeln der IT-Sicherheit.', 'Bei den englischen Begriffen hilft ein Blick in die Frage: Das gesuchte Wort steht dort oft schon teilweise.', 'Die letzte Frage nennt einen Tag, an dem noch kein Schutz existiert: Null Tage.']
+  }));
+  reg(69, quizLevel({
+    n: 69, title: 'Die Zahlensysteme', host: 'ghost@zahlen-2',
+    story: ['Computer rechnen mit Binär- und Hexadezimalzahlen. Zeig, dass du umrechnen kannst.'],
+    questions: [
+      { q: '1010 im Binärsystem ist welche Dezimalzahl?', a: ['10'] }, { q: 'Wie schreibt man 15 im Hexadezimalsystem? (ein Buchstabe)', a: ['f'] },
+      { q: '11111111 im Binärsystem ist welche Dezimalzahl?', a: ['255'] }, { q: 'FF im Hexadezimalsystem ist welche Dezimalzahl?', a: ['255'] },
+      { q: '100000 im Binärsystem ist welche Dezimalzahl?', a: ['32'] }, { q: 'Wie viele verschiedene Werte passen in ein Byte?', a: ['256'] },
+      { q: 'Wie schreibt man 8 im Binärsystem?', a: ['1000'] }
+    ],
+    hints: ['Binär: Von rechts haben die Stellen die Werte 1, 2, 4, 8, 16, 32, 64, 128.', 'Hex zählt bis 15: 10 = A, 11 = B, 12 = C, 13 = D, 14 = E, 15 = F.', 'Ein Byte hat 8 Bit: zwei hoch acht Werte.']
+  }));
+
+  reg(70, alibiLevel({
+    n: 70, title: 'Das vierte Alibi', host: 'ghost@verhoer-4',
+    story: ['Vierter Fall, neue Verdächtige und eine neue Regel.'],
+    names: ['ida', 'jan', 'kai', 'lena'], answer: 'ida',
+    statements: ['Ida:  "Ich war es nicht."', 'Jan:  "Kai lügt."', 'Kai:  "Jan war es."', 'Lena: "Kai sagt die Wahrheit."'],
+    rule: ['Genau eine Person ist der Täter.', 'Genau EINE der vier Aussagen ist wahr, die anderen drei sind falsch.'],
+    hints: ['Probiere jede Person als Täter durch und zähle die wahren Aussagen. Es muss genau eine sein.', 'Jans und Lenas Aussagen hängen von Kais Aussage ab: Jan sagt, Kai lügt, Lena sagt, Kai sagt die Wahrheit. Nur eine der beiden kann stimmen.', 'Kais Aussage "Jan war es" ist nur wahr, wenn Jan der Täter ist. Teste, ob das aufgeht.']
+  }));
+  reg(71, clueLevel({
+    n: 71, title: 'Das Zahlenschloss II', host: 'ghost@schloss-2',
+    story: ['Wieder ein 3-stelliges Schloss, wieder vier Versuche eines früheren Einbrechers.', 'Finde den richtigen Code.'],
+    clues: ['097  zwei Ziffern richtig und beide am richtigen Platz', '569  zwei Ziffern richtig: eine am richtigen, eine am falschen Platz', '275  zwei Ziffern richtig, aber beide am falschen Platz', '907  zwei Ziffern richtig: eine am richtigen, eine am falschen Platz'],
+    answer: '597',
+    hints: ['Jeder Tipp enthält zwei richtige Ziffern. Welche Ziffern kommen in mehreren Tipps vor?', 'Aus 097 und 275 zusammen: Die Ziffern 9, 7 und 5 spielen die Hauptrolle.', 'Der Code besteht aus 5, 9 und 7 in einer bestimmten Reihenfolge. Prüfe die Plätze mit den Tipps.']
+  }));
+  reg(72, sudokuLevel({
+    n: 72, title: 'Das Sudoku III', host: 'ghost@sudoku-3', puzzle: [[0, 3, 0, 0], [0, 0, 0, 3], [0, 0, 4, 0], [0, 4, 0, 2]],
+    story: ['Ein Sudoku mit nur fünf Vorgaben. Du schaffst das mit reiner Logik.'],
+    hints: ['Suche ein Feld, in das nur eine Zahl passt. Zeile 4 hat schon 4 und 2, also fehlen dort 1 und 3.', 'In Spalte 2 steht 3 und 4, in Spalte 4 steht 3 und 2. Schau, wo die 3 in Zeile 4 stehen kann.', 'Arbeite Zeile für Zeile. Wenn nichts mehr geht, prüfe die 2x2-Blöcke.']
+  }));
+  reg(73, lightsOutLevel({
+    n: 73, title: 'Lichter aus (groß)', host: 'ghost@lichter-5', init: ['###..', '##.##', '....#', '##.##', '.####'],
+    story: ['Das große Schaltpult: 5x5 Lichter. Gleiche Regeln, viel mehr Felder.'],
+    hints: ['Jedes Feld einmal oder gar nicht drücken. Zweimal drücken hebt sich auf.', 'Gehe Zeile für Zeile vor: Ein Licht in einer Zeile schaltest du mit dem Feld direkt darunter aus.', 'Wenn nur noch Lichter in der letzten Zeile übrig sind, brauchst du eine passende Kombination in der ersten Zeile. Mit "neu" fängst du von vorn an.']
+  }));
+  reg(74, mazeLevel({
+    n: 74, title: 'Das Labyrinth III', host: 'ghost@labyrinth-3', fog: true,
+    map: ['###########################', '#S  #       #       #     #', '### ### ### # ##### # # # #', '# #     #   # #     # # # #', '# ####### ### # ####### # #', '#   #   # #   # #       # #', '# ### # # # ### # # #######', '# #   #   # #   # #       #', '# # ####### # ########### #', '#   #   #   # #         # #', '# ### # # ### # ####### # #', '# #   # #   # #   #   #   #', '# ### # ### # ### # ##### #', '#     #     #     #      E#', '###########################'],
+    story: ['Das dritte Labyrinth ist riesig, und deine Taschenlampe leuchtet wieder nur 2 Felder weit.'],
+    hints: ['Mit "karte" siehst du, was du schon erkundet hast. Unbekannte Felder zeigt ein ?.', 'Die Hand-an-der-Wand-Regel führt immer zum Ausgang: Folge mit einer Hand dauerhaft derselben Wand.', 'Der Ausgang liegt unten rechts, der Start oben links. Mit "ost 5" gehst du mehrere Schritte auf einmal.']
+  }));
+  reg(75, hanoiLevel({
+    n: 75, title: 'Die Türme von Hanoi V', host: 'ghost@hanoi-5', discs: 5,
+    story: ['Der dritte Schutz ist der größte: 5 Scheiben.'],
+    hints: ['5 Scheiben brauchen mindestens 31 Züge.', 'Das Muster: erst die oberen 4 Scheiben nach B bringen, dann die größte nach C, dann die 4 von B nach C.', 'Das Prinzip wiederholt sich in jeder Stufe: Mit 4 Scheiben als Teilaufgabe geht es genauso.']
+  }));
+
+  /* 76: Nim mit drei Haufen */
+  var nimp = [];
+  function nimpShow() { nimp.forEach(function (n, i) { print((i + 1) + ': ' + repeatStr('|', n) + (n ? '  (' + n + ')' : '  (leer)'), 'logline'); }); }
+  function nimpDone() { return nimp.every(function (n) { return n === 0; }); }
+  function nimpReset() { nimp = [3, 4, 5]; }
+  reg(76, {
+    title: 'Nim mit Haufen', host: 'ghost@nim',
+    hints: ['Es gibt eine Gewinnstrategie, wenn du anfängst. Schreibe die Haufengrößen als Binärzahlen und bilde die "Nim-Summe": Bei jeder Stelle zählst du, ob die Anzahl der Einsen ungerade ist.', 'Die Nim-Summe von 3, 4, 5 ist 2 (binär 011 xor 100 xor 101 = 010). Dein Ziel ist immer, die Nim-Summe auf 0 zu bringen.', 'Erster Zug: Nimm 2 Hölzer vom ersten Haufen. Danach reagierst du immer so, dass die Nim-Summe wieder 0 ist.'],
+    chips: [{ c: 'brett' }, { c: 'nimm ', fill: true }, { c: 'neu' }],
+    help: ['brett ............. Haufen anzeigen', 'nimm <haufen> <anzahl>  Hölzer von einem Haufen nehmen, z. B. nimm 1 2', 'neu .............. neue Runde'],
+    intro: ['Der Wachcomputer fordert dich zu einem Spiel mit drei Haufen Streichhölzern heraus. Abwechselnd nimmt jeder von EINEM Haufen beliebig viele Hölzer.', 'Wer das letzte Holz nimmt, gewinnt. Du beginnst.', '', 'Befehle: nimm <haufen> <anzahl>, brett, neu, hinweis'],
+    start: nimpReset,
+    after: function () { print(''); nimpShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'brett') { nimpShow(); return true; }
+      if (cmd === 'neu') { nimpReset(); nimpShow(); return true; }
+      if (cmd === 'nimm') {
+        var v = intsIn(arg);
+        if (v.length !== 2 || v[0] < 1 || v[0] > 3) { print('Benutzung: nimm <haufen 1-3> <anzahl>   z. B. nimm 1 2', 'warn'); return true; }
+        var h = v[0] - 1, k = v[1];
+        if (k < 1 || k > nimp[h]) { print('So viele Hölzer liegen in diesem Haufen nicht.', 'err'); return true; }
+        nimp[h] -= k;
+        if (nimpDone()) { print('Du hast das letzte Holz genommen und gewinnst!', 'info'); solve(76); return true; }
+        var x = nimp[0] ^ nimp[1] ^ nimp[2], pick = -1, take = 1;
+        if (x) { for (var i = 0; i < 3; i++) { if ((nimp[i] ^ x) < nimp[i]) { pick = i; take = nimp[i] - (nimp[i] ^ x); break; } } }
+        if (pick === -1) { pick = nimp.indexOf(Math.max.apply(null, nimp)); take = 1; }
+        nimp[pick] -= take;
+        print('Der Computer nimmt ' + take + ' von Haufen ' + (pick + 1) + '.', 'dim');
+        if (nimpDone()) { print('Der Computer hat das letzte Holz genommen. Du verlierst. Neue Runde.', 'err'); nimpReset(); }
+        nimpShow();
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 77: Nonogramm-Fabrik (5x5) */
+  function nonoLevel(o) {
+    var rowsC = o.pic.map(function (r) { return nonoClue(r.split('').map(Number)); });
+    var colsC = [0, 1, 2, 3, 4].map(function (c) { return nonoClue(o.pic.map(function (r) { return +r.charAt(c); })); });
+    var g = [];
+    function fresh() { g = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); }
+    function show() {
+      print('Spalten: ' + colsC.map(function (c) { return '[' + c.join(' ') + ']'; }).join(' '), 'logline');
+      print('    1 2 3 4 5', 'dim');
+      g.forEach(function (row, r) { print((r + 1) + '   ' + row.map(function (v) { return v ? '#' : '.'; }).join(' ') + '   [' + rowsC[r].join(' ') + ']', 'logline'); });
+    }
+    function done() {
+      for (var r = 0; r < 5; r++) { if (nonoClue(g[r]).join() !== rowsC[r].join()) { return false; } }
+      for (var c = 0; c < 5; c++) { if (nonoClue(g.map(function (row) { return row[c]; })).join() !== colsC[c].join()) { return false; } }
+      return true;
+    }
+    return {
+      title: o.title, host: o.host, hints: o.hints,
+      chips: [{ c: 'brett' }, { c: 'fuelle ', fill: true }, { c: 'neu' }],
+      help: ['brett ............. Feld und Zahlen anzeigen', 'fuelle <z> <s> ... Feld füllen oder leeren (Zeile, Spalte)', 'neu .............. alles leeren'],
+      intro: o.story.concat(['', 'Die Zahlen am Rand verraten, wie viele Felder in einer Reihe nacheinander gefüllt sind. Fülle das Feld so, dass alle Zeilen- und Spaltenzahlen stimmen.', 'Befehle: brett, fuelle <zeile> <spalte>, neu, hinweis']),
+      start: fresh,
+      after: function () { print(''); show(); },
+      run: function (cmd, arg) {
+        if (cmd === 'brett') { show(); return true; }
+        if (cmd === 'neu') { fresh(); show(); return true; }
+        if (cmd === 'fuelle') {
+          var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
+          if (v.length !== 2 || v[0] < 1 || v[0] > 5 || v[1] < 1 || v[1] > 5) { print('Benutzung: fuelle <zeile> <spalte>   (1 bis 5)', 'warn'); return true; }
+          g[v[0] - 1][v[1] - 1] ^= 1;
+          show();
+          if (done()) { print('Das Bild stimmt!', 'info'); solve(o.n); }
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+  reg(77, nonoLevel({
+    n: 77, title: 'Das Bilderrätsel II', host: 'ghost@bild-2', pic: ['00100', '01110', '11111', '11011', '11011'],
+    story: ['Ein zweites Bilderrätsel schützt die Tür. Was wird es diesmal?'],
+    hints: ['Die Zahlen am Rand sagen, wie viele Felder in einer Zeile oder Spalte zusammenhängend gefüllt sind.', 'Beginne mit den vollen Reihen: [5] füllt die ganze Zeile, [4] in einer Spalte der Länge 5 lässt nur zwei Möglichkeiten.', 'Mit "fuelle z s" füllst du ein Feld, nochmal leert es wieder. Das fertige Bild ist ein Haus.']
+  }));
+
+  /* 78: Wort-Ratespiel mit 6 Buchstaben */
+  var WORDS6 = ['SIGNAL', 'SERVER', 'TUNNEL', 'ROUTER', 'FUNKEN', 'SCHILD', 'PYTHON', 'KOMETE'];
+  function wordleScoreN(secret, guess) {
+    var n = secret.length, res = [], left = {}, i;
+    for (i = 0; i < n; i++) { res.push('.'); }
+    for (i = 0; i < n; i++) { if (guess.charAt(i) === secret.charAt(i)) { res[i] = '+'; } else { left[secret.charAt(i)] = (left[secret.charAt(i)] || 0) + 1; } }
+    for (i = 0; i < n; i++) { if (res[i] === '.' && left[guess.charAt(i)]) { res[i] = '~'; left[guess.charAt(i)]--; } }
+    return res.join('');
+  }
+  function wordleLevelN(o) {
+    var secret, tries;
+    function fresh() { secret = o.words[Math.floor(Math.random() * o.words.length)]; tries = []; }
+    return {
+      title: o.title, host: o.host, hints: o.hints,
+      chips: [{ c: 'rate ', fill: true }, { c: 'verlauf' }],
+      help: ['rate <wort> ....... Wort mit ' + o.len + ' Buchstaben raten', 'verlauf .......... bisherige Tipps', '+ richtig, ~ falscher Platz, . nicht enthalten'],
+      intro: o.story.concat(['', 'Das Passwort ist ein Wort mit ' + o.len + ' Buchstaben. Du hast ' + o.tries + ' Versuche.', '+ = Buchstabe richtig, ~ = kommt vor, aber an anderer Stelle, . = kommt nicht vor.', 'Befehle: rate <wort>, verlauf, hinweis']),
+      start: fresh,
+      run: function (cmd, arg) {
+        if (cmd === 'verlauf') {
+          if (!tries.length) { print('Noch keine Tipps.', 'dim'); } else { tries.forEach(function (t, i) { print('#' + (i + 1) + '  ' + t.g + '  ' + t.s); }); }
+          return true;
+        }
+        if (cmd === 'rate') {
+          var g = norm(arg).toUpperCase().trim();
+          if (!new RegExp('^[A-Z]{' + o.len + '}$').test(g)) { print('Benutzung: rate <wort mit ' + o.len + ' Buchstaben>', 'warn'); return true; }
+          var sc = wordleScoreN(secret, g);
+          tries.push({ g: g, s: sc });
+          print('#' + tries.length + '  ' + g + '  ' + sc, g === secret ? 'ok' : 'info');
+          if (g === secret) { print('Gefunden nach ' + tries.length + ' Tipps!', 'info'); solve(o.n); }
+          else if (tries.length >= o.tries) { print('Leider nicht erraten. Das Wort war ' + secret + '. Ein neues Wort wurde gewählt.', 'err'); fresh(); }
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+  reg(78, wordleLevelN({
+    n: 78, title: 'Das lange Passwort-Wort', host: 'ghost@wort-2', len: 6, tries: 7, words: WORDS6,
+    story: ['Das System nutzt diesmal ein längeres Passwort-Wort und gibt dir Rückmeldung zu jedem Versuch.'],
+    hints: ['Starte mit einem Wort mit vielen häufigen Buchstaben, z. B. SIGNAL oder SERVER.', 'Buchstaben mit + sind richtig, merke sie dir für den nächsten Tipp.', 'Das Wort stammt aus dem Umfeld Technik und Funk. Tippe nur Wörter mit 6 Buchstaben.']
+  }));
+
+  /* 79: Mini-Kampagne II "Der Vorfall" (Incident Response, verteidigend) */
+  function campaignLevel(o) {
+    var st = o.first;
+    function show() {
+      var s = o.stages[st];
+      print('');
+      s.text.forEach(function (l, i) { print(l, i === 0 ? 'head' : (/^\d\d:\d\d/.test(l) ? 'logline' : '')); });
+      if (s.opts) { s.opts.forEach(function (op, i) { print((i + 1) + ') ' + op.t); }); }
+    }
+    return {
+      title: o.title, host: o.host, hints: o.hints,
+      chips: function () {
+        var s = o.stages[st], c = [];
+        if (s.opts) { s.opts.forEach(function (op, i) { c.push({ c: String(i + 1) }); }); } else { c.push({ c: 'antwort ', fill: true }); }
+        return c.concat([{ c: 'text' }, { c: 'tipp' }, { c: 'neu' }]);
+      },
+      help: ['1 2 3 ............. Antwort wählen (oder "wahl <n>")', 'antwort <text> ... Frage beantworten', 'text ............. aktuelles Kapitel anzeigen', 'tipp ............. Hinweis zum Kapitel', 'neu .............. von vorn'],
+      intro: o.story.concat(['', 'Befehle: 1, 2, ... (oder wahl <n>), antwort <text>, text, tipp, neu']),
+      start: function () { st = o.first; },
+      after: show,
+      run: function (cmd, arg) {
+        var s = o.stages[st];
+        if (cmd === 'neu') { st = o.first; show(); return true; }
+        if (cmd === 'text') { show(); return true; }
+        if (cmd === 'tipp') { print(s.tip, 'warn'); return true; }
+        if (s.opts && (cmd === 'wahl' || /^\d$/.test(cmd))) {
+          var k = cmd === 'wahl' ? parseInt(arg, 10) : parseInt(cmd, 10);
+          if (!(k >= 1 && k <= s.opts.length)) { print('Wähle eine Zahl von 1 bis ' + s.opts.length + '.', 'warn'); return true; }
+          var op = s.opts[k - 1];
+          if (op.lose) { print(op.lose, 'err'); print('Triff die Entscheidung noch einmal.', 'dim'); show(); return true; }
+          if (op.win) { print(op.win, 'info'); solve(o.n); return true; }
+          st = op.go; show(); return true;
+        }
+        if (s.answer && (cmd === 'antwort' || cmd === 'a')) {
+          if (!arg) { print('Benutzung: antwort <text>', 'warn'); return true; }
+          if (!s.answer(arg)) { print('Das stimmt nicht. Versuche es noch einmal (oder "tipp").', 'err'); return true; }
+          print(s.ok, 'info'); st = s.next; show();
+          return true;
+        }
+        return false;
+      }
+    };
+  }
+  var L79_LOG = ['11:02:14 198.51.100.44 LOGIN FEHLER user=mueller', '11:02:19 198.51.100.44 LOGIN FEHLER user=mueller', '11:02:25 198.51.100.44 LOGIN ERFOLG user=mueller', '11:03:02 198.51.100.44 EXPORT kunden.csv 85MB', '11:15:40 192.168.7.12 LOGIN ERFOLG user=schmidt', '11:16:10 192.168.7.12 DATEI LESEN plan.pdf'];
+  reg(79, campaignLevel({
+    n: 79, title: 'Operation Vorfall', host: 'ghost@notfall', first: 'i1',
+    story: ['KAMPAGNE: DER VORFALL', 'Du bist Teil des Notfallteams der (erfundenen) Nordlicht GmbH. Diesmal verteidigst du. Vier Kapitel.'],
+    hints: ['Als Verteidiger gilt: Schaden begrenzen, Beweise sichern, Verantwortliche informieren.', 'Im Log fällt die IP auf, bei der zuerst Fehlversuche und dann ein Erfolg und ein Export stehen.', 'Mit "tipp" bekommst du einen Hinweis zum aktuellen Kapitel.'],
+    stages: {
+      i1: { text: ['Kapitel 1 von 4: Der Alarm.', 'Ein Server meldet seltsamen Datenverkehr nach draußen. Was tust du zuerst?'],
+        opts: [{ t: 'Alle Dateien auf dem Server löschen, dann ist das Problem weg.', lose: 'Falsch. Damit vernichtest du Beweise und Daten.' },
+          { t: 'Den Server vom Netzwerk trennen, aber eingeschaltet lassen.', go: 'i2' },
+          { t: 'Abwarten, vielleicht hört es von selbst auf.', lose: 'Falsch. Währenddessen fließen weiter Daten ab.' }],
+        tip: 'Der Schaden soll nicht größer werden, aber Spuren im laufenden Server sind wertvoll.' },
+      i2: { text: ['Kapitel 2 von 4: Die Spur.'].concat(L79_LOG, ['Von welcher IP-Adresse kam der Angriff? (antwort <ip>)']),
+        answer: function (a) { return a.trim() === '198.51.100.44'; }, next: 'i3', ok: 'Die Quelle ist gefunden.', tip: 'Achte auf die IP mit mehreren Fehlversuchen, dann einem Erfolg und einem Export.' },
+      i3: { text: ['Kapitel 3 von 4: Das Konto.'].concat(L79_LOG, ['Welches Benutzerkonto wurde übernommen? (antwort <name>)']),
+        answer: function (a) { return norm(a).trim() === 'mueller'; }, next: 'i4', ok: 'Das Konto wird gesperrt.', tip: 'Bei welchem Nutzer folgt auf Fehlversuche ein erfolgreicher Login von derselben IP?' },
+      i4: { text: ['Kapitel 4 von 4: Die Meldung.', 'Der Export enthielt Kundendaten. Wie gehst du vor?'],
+        opts: [{ t: 'Still beheben. Niemand muss davon erfahren.', lose: 'Falsch. Verantwortliche und Betroffene müssen informiert werden, bei Kundendaten auch der Datenschutz.' },
+          { t: 'Verantwortliche und Datenschutzbeauftragte informieren, alles dokumentieren und das Passwort zurücksetzen.', win: 'Genau richtig. Transparenz, Dokumentation und schnelles Handeln begrenzen den Schaden.' },
+          { t: 'Den Angreifer zurückhacken.', lose: 'Falsch. Gegenangriffe sind illegal und gefährlich.' }],
+        tip: 'Vorfälle mit Kundendaten müssen gemeldet und dokumentiert werden. Selbstjustiz ist keine Lösung.' }
+    }
+  }));
+
+  reg(80, decodeLevel({
+    n: 80, title: 'Die Meisterprüfung', host: 'ghost@meisterpruefung',
+    story: ['Die allerletzte Nachricht. Fünf Schichten, zwölf Werkzeuge, und niemand sagt dir die Reihenfolge.', 'Beweise, dass du ein Meister der Chiffren bist.'],
+    plain: 'GRATULATION DU HAST DAS PASSWORT LAUTET MEISTERHACKER', layers: [{ t: 'umkehren' }, { t: 'atbash' }, { t: 'shift', a: '7' }, { t: 'hex' }, { t: 'base64' }],
+    tools: ['base64', 'hex', 'shift', 'atbash', 'umkehren', 'rot13', 'key', 'xor', 'bin', 'zahlen', 'polybius', 'url'], answer: 'MEISTERHACKER',
+    hints: ['Die äußerste Schicht sieht aus wie Base64. Danach folgen Hex-Zahlen.', 'Nach Hex bleibt Buchstabensalat. Eine Caesar-Verschiebung ist dabei, probiere shift mit verschiedenen Zahlen.', 'Reihenfolge: base64, hex, shift 7, atbash, umkehren.']
+  }));
 
   /* ---------- Zustand & Speicher ---------- */
 

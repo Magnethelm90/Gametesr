@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst 60 Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst 80 Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -49,13 +49,19 @@ Du bist „Ghost“ und löst 60 Missionen. Gib Befehle ein oder tippe die Knöp
 | 57 – Der Schlüsselaustausch | Diffie-Hellman mit kleinen Zahlen: Warum es mit großen Zahlen sicher ist, mit winzigen aber nicht. |
 | 58 – Das Schiebepuzzle | Acht Kacheln und eine Lücke, in die richtige Reihenfolge bringen. |
 | 59 – Das Minenfeld | Logik-Minensucher auf 6x6 Feldern, ganz ohne Raten lösbar. |
-| 60 – Das Bilderrätsel | Finale: Nonogramm. Die Zahlen am Rand verraten das Bild. |
+| 60 – Das Bilderrätsel | Nonogramm. Die Zahlen am Rand verraten das Bild. |
+| 61–66 | Chiffren-Werkstatt II: Morse, Handytasten, Bits mit Zaunschiene, Vigenère mit Rätsel-Schlüssel, lange Ketten, XOR-Meister. |
+| 67–69 | Quiz: Hardware, IT-Sicherheit und Zahlensysteme (Binär, Hex). |
+| 70–72 | Logik: viertes Alibi-Rätsel, zweites Zahlenschloss, drittes Sudoku. |
+| 73–78 | Knobeln II: Lichter aus 5x5, riesiges dunkles Labyrinth, Türme von Hanoi mit 5 Scheiben, Nim mit drei Haufen gegen den Computer, zweites Bilderrätsel, Wort-Ratespiel mit 6 Buchstaben. |
+| 79 – Operation Vorfall | Mini-Kampagne, diesmal als Verteidiger: Alarm, Spurensuche im Log, Konto finden, richtig melden. |
+| 80 – Die Meisterprüfung | Finale: fünf Schichten, zwölf Werkzeuge, die Reihenfolge findest du selbst heraus. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
 - `hilfe` – Befehlsübersicht
 - `level <n>` – Mission starten (jedes Level schaltet das nächste frei)
-- `menu alle` – alle 60 Level anzeigen (`menu` zeigt nur die nächsten)
+- `menu alle` – alle 80 Level anzeigen (`menu` zeigt nur die nächsten)
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
 - `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)
