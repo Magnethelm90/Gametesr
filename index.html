@@ -71,6 +71,73 @@ header {
 }
 .sndbtn[aria-pressed="false"] { color: var(--dim); }
 .sndbtn:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
+.goal {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  color: var(--dim);
+  background: var(--bg);
+  border: 0;
+  border-bottom: 1px solid var(--faint);
+  padding: 7px 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.goal.open { white-space: normal; }
+.goal .lv { color: var(--fg); font-weight: bold; }
+.goal:focus-visible { outline: 2px solid var(--info); outline-offset: -2px; }
+[hidden] { display: none !important; }
+#panel {
+  --cell: clamp(34px, 11.5vw, 54px);
+  background: var(--panel);
+  border-top: 1px solid var(--faint);
+  padding: 8px 10px;
+  max-height: 46vh;
+  max-height: 46dvh;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+}
+@media (max-height: 680px) { #panel { --cell: clamp(30px, 9.5vw, 40px); padding: 6px 10px; } .cell.mode { height: 34px; } .cell.pad { height: 38px; } }
+#panel .wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#panel .row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.grid { display: grid; gap: 4px; }
+.cell {
+  width: var(--cell);
+  height: var(--cell);
+  min-width: 0;
+  padding: 0;
+  font: inherit;
+  font-size: calc(var(--cell) * .42);
+  line-height: 1;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+  white-space: pre-line;
+}
+.cell:active { background: var(--faint); }
+.cell.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.cell.given { color: var(--dim); background: rgba(56, 255, 122, .1); font-weight: bold; }
+.cell.sel { outline: 2px solid var(--info); outline-offset: 1px; }
+.cell.hid { background: var(--faint); }
+.cell.flag { background: var(--warn); color: var(--bg); }
+.cell.clue { border-color: transparent; color: var(--dim); font-size: calc(var(--cell) * .3); cursor: default; }
+.cell.bR { margin-right: 4px; }
+.cell.bB { margin-bottom: 4px; }
+.cell.bad { color: var(--err); }
+.cell.mode { width: auto; min-width: 96px; padding: 0 10px; height: 40px; font-size: 14px; }
+.cell.mode.active { background: var(--fg); color: var(--bg); }
+.cell.pad { height: 44px; }
+.cell.arrow { font-size: 20px; }
+.mazemap { margin: 0; font: inherit; font-size: 11px; line-height: 11px; color: var(--fg); white-space: pre; }
 #out {
   flex: 1;
   overflow-y: auto;
@@ -163,7 +230,9 @@ form { display: flex; align-items: center; gap: 8px; }
   <span class="progress" id="progress" aria-label="Fortschritt"></span>
   <button id="snd" class="sndbtn" type="button" aria-pressed="true" aria-label="Sound ein- oder ausschalten">&#9835; AN</button>
 </header>
+<button id="goal" class="goal" type="button" hidden aria-expanded="false" aria-label="Ziel des Levels, tippen zum Aufklappen"></button>
 <main id="out" role="log" aria-live="polite" aria-label="Terminal-Ausgabe"></main>
+<div id="panel" hidden></div>
 <footer>
   <div id="chips" aria-label="Schnellbefehle"></div>
   <form id="form" autocomplete="off">
@@ -896,24 +965,38 @@ form { display: flex; align-items: center; gap: 8px; }
   /* --- Lights Out --- */
 
   function lightsOutLevel(o) {
-    var n = o.init.length, b = [];
+    var n = o.init.length, b = [], viewEl = null;
     function load() { b = o.init.map(function (r) { return r.split('').map(function (c) { return c === '#' ? 1 : 0; }); }); }
-    function show() {
+    function text() {
       var head = '   ';
       for (var c = 1; c <= n; c++) { head += c + ' '; }
       print(head, 'dim');
       b.forEach(function (row, r) { print((r + 1) + '  ' + row.map(function (v) { return v ? '#' : '.'; }).join(' '), 'logline'); });
     }
+    function render() {
+      viewEl.textContent = '';
+      var g = document.createElement('div');
+      g.className = 'grid';
+      g.style.gridTemplateColumns = 'repeat(' + n + ', var(--cell))';
+      b.forEach(function (row, r) {
+        row.forEach(function (v, c) {
+          g.appendChild(cellBtn('', v ? 'on' : '', function () { tap('druecke ' + (r + 1) + ' ' + (c + 1)); }, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (v ? 'Licht an' : 'Licht aus')));
+        });
+      });
+      viewEl.appendChild(g);
+    }
+    function view() { if (panelOn(viewEl)) { render(); } else { text(); } }
     return {
       title: o.title, host: o.host, hints: o.hints,
       chips: [{ c: 'brett' }, { c: 'druecke ', fill: true }, { c: 'neu' }],
       help: ['brett ............. Spielfeld anzeigen', 'druecke <z> <s> .. Feld drücken (Zeile, Spalte)', 'neu .............. Feld zurücksetzen'],
-      intro: o.story.concat(['', '# = Licht an, . = Licht aus. Ein Druck schaltet das Feld und seine Nachbarn (oben, unten, links, rechts) um.', 'Befehle: brett, druecke <zeile> <spalte>, neu, hinweis']),
+      intro: o.story.concat(['', '# = Licht an, . = Licht aus. Ein Druck schaltet das Feld und seine Nachbarn (oben, unten, links, rechts) um. Tippe die Felder direkt an.', 'Befehle: brett, druecke <zeile> <spalte>, neu, hinweis']),
       start: load,
-      after: function () { print(''); show(); },
+      panel: function () { viewEl = document.createElement('div'); viewEl.className = 'wrap'; render(); return viewEl; },
+      after: function () { print(''); view(); },
       run: function (cmd, arg) {
-        if (cmd === 'brett') { show(); return true; }
-        if (cmd === 'neu') { load(); show(); return true; }
+        if (cmd === 'brett') { text(); return true; }
+        if (cmd === 'neu') { load(); view(); return true; }
         if (cmd === 'druecke' || cmd === 'druck') {
           var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
           if (v.length !== 2 || v[0] < 1 || v[0] > n || v[1] < 1 || v[1] > n) { print('Benutzung: druecke <zeile> <spalte>   (1 bis ' + n + ')', 'warn'); return true; }
@@ -922,7 +1005,7 @@ form { display: flex; align-items: center; gap: 8px; }
             var rr = r + d[0], cc = c + d[1];
             if (rr >= 0 && rr < n && cc >= 0 && cc < n) { b[rr][cc] ^= 1; }
           });
-          show();
+          view();
           if (b.every(function (row) { return row.every(function (x) { return !x; }); })) { print('Alle Lichter sind aus!', 'info'); solve(o.n); }
           return true;
         }
@@ -934,9 +1017,9 @@ form { display: flex; align-items: center; gap: 8px; }
   /* --- Sudoku 4x4 --- */
 
   function sudokuLevel(o) {
-    var g = [];
-    function load() { g = o.puzzle.map(function (r) { return r.slice(); }); }
-    function show() {
+    var g = [], sel = null, viewEl = null;
+    function load() { g = o.puzzle.map(function (r) { return r.slice(); }); sel = null; }
+    function text() {
       print('    1 2   3 4', 'dim');
       for (var r = 0; r < 4; r++) {
         if (r === 2) { print('    ---+---', 'logline'); }
@@ -953,16 +1036,50 @@ form { display: flex; align-items: center; gap: 8px; }
       for (var y = br; y < br + 2; y++) { for (var x = bc; x < bc + 2; x++) { if ((y !== r || x !== c) && g[y][x] === v) { return true; } } }
       return false;
     }
+    function render() {
+      viewEl.textContent = '';
+      var grid = document.createElement('div');
+      grid.className = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(4, var(--cell))';
+      for (var r = 0; r < 4; r++) {
+        for (var c = 0; c < 4; c++) {
+          (function (r, c) {
+            var given = !!o.puzzle[r][c], isSel = sel && sel[0] === r && sel[1] === c;
+            var cls = (given ? 'given ' : '') + (isSel ? 'sel ' : '') + (c === 1 ? 'bR ' : '') + (r === 1 ? 'bB' : '');
+            grid.appendChild(cellBtn(g[r][c] ? String(g[r][c]) : '', cls.trim(), given ? null : function () { sel = [r, c]; render(); },
+              'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (g[r][c] ? g[r][c] : 'leer') + (given ? ', vorgegeben' : '')));
+          })(r, c);
+        }
+      }
+      viewEl.appendChild(grid);
+      var pad = document.createElement('div');
+      pad.className = 'row';
+      [1, 2, 3, 4].forEach(function (v) {
+        pad.appendChild(cellBtn(String(v), 'pad', function () {
+          if (!sel) { print('Tippe zuerst ein leeres Feld an.', 'warn'); return; }
+          var r = sel[0], c = sel[1]; sel = null; tap('setze ' + (r + 1) + ' ' + (c + 1) + ' ' + v);
+          if (panelOn(viewEl)) { render(); }
+        }, 'Zahl ' + v + ' eintragen'));
+      });
+      pad.appendChild(cellBtn('\u2715', 'pad', function () {
+        if (!sel) { print('Tippe zuerst ein Feld an.', 'warn'); return; }
+        var r = sel[0], c = sel[1]; sel = null; tap('loesche ' + (r + 1) + ' ' + (c + 1));
+        if (panelOn(viewEl)) { render(); }
+      }, 'Feld leeren'));
+      viewEl.appendChild(pad);
+    }
+    function view() { if (panelOn(viewEl)) { render(); } else { text(); } }
     return {
       title: o.title, host: o.host, hints: o.hints,
       chips: [{ c: 'brett' }, { c: 'setze ', fill: true }, { c: 'loesche ', fill: true }, { c: 'neu' }],
       help: ['brett ............. Spielfeld anzeigen', 'setze <z> <s> <n> . Zahl eintragen (Zeile, Spalte, Zahl)', 'loesche <z> <s> .. Zahl entfernen', 'neu .............. von vorn beginnen'],
-      intro: o.story.concat(['', 'Fülle das Feld mit 1 bis 4. In jeder Zeile, Spalte und jedem 2x2-Block darf jede Zahl nur einmal vorkommen.', 'Befehle: brett, setze <zeile> <spalte> <zahl>, loesche <zeile> <spalte>, neu, hinweis']),
+      intro: o.story.concat(['', 'Fülle das Feld mit 1 bis 4. In jeder Zeile, Spalte und jedem 2x2-Block darf jede Zahl nur einmal vorkommen. Tippe ein Feld an, dann die Zahl.', 'Befehle: brett, setze <zeile> <spalte> <zahl>, loesche <zeile> <spalte>, neu, hinweis']),
       start: load,
-      after: function () { print(''); show(); },
+      panel: function () { viewEl = document.createElement('div'); viewEl.className = 'wrap'; render(); return viewEl; },
+      after: function () { print(''); view(); },
       run: function (cmd, arg) {
-        if (cmd === 'brett') { show(); return true; }
-        if (cmd === 'neu') { load(); show(); return true; }
+        if (cmd === 'brett') { text(); return true; }
+        if (cmd === 'neu') { load(); view(); return true; }
         if (cmd === 'setze' || cmd === 'loesche') {
           var v = intsIn(arg.replace(/^(\d)(\d)(\d)?$/, '$1 $2 $3'));
           var need = cmd === 'setze' ? 3 : 2;
@@ -972,10 +1089,10 @@ form { display: flex; align-items: center; gap: 8px; }
           }
           var r = v[0] - 1, c = v[1] - 1;
           if (o.puzzle[r][c]) { print('Das ist eine vorgegebene Zahl und lässt sich nicht ändern.', 'err'); return true; }
-          if (cmd === 'loesche') { g[r][c] = 0; show(); return true; }
+          if (cmd === 'loesche') { g[r][c] = 0; view(); return true; }
           if (conflict(r, c, v[2])) { print('Das widerspricht einer anderen Zahl in Zeile, Spalte oder Block.', 'err'); return true; }
           g[r][c] = v[2];
-          show();
+          view();
           if (g.every(function (row) { return row.every(Boolean); })) { print('Das Feld ist vollständig gelöst!', 'info'); solve(o.n); }
           return true;
         }
@@ -987,7 +1104,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* --- Labyrinth --- */
 
   function mazeLevel(o) {
-    var rows = o.map, pos, seen, steps;
+    var rows = o.map, pos, seen, steps, viewEl = null, stepN = 1;
     var DIRS4 = { nord: [0, -1], n: [0, -1], hoch: [0, -1], sued: [0, 1], s: [0, 1], runter: [0, 1], west: [-1, 0], w: [-1, 0], links: [-1, 0], ost: [1, 0], o: [1, 0], rechts: [1, 0] };
     function cell(x, y) { return rows[y] ? rows[y].charAt(x) : '#'; }
     function see() {
@@ -997,8 +1114,8 @@ form { display: flex; align-items: center; gap: 8px; }
         }
       }
     }
-    function show() {
-      var out2 = rows.map(function (row, y) {
+    function lines() {
+      return rows.map(function (row, y) {
         return row.split('').map(function (ch, x) {
           if (x === pos.x && y === pos.y) { return '@'; }
           if (!seen[y + ',' + x]) { return '?'; }
@@ -1006,8 +1123,32 @@ form { display: flex; align-items: center; gap: 8px; }
           return ch;
         }).join('');
       });
-      printAll(out2, 'logline');
     }
+    function text() { printAll(lines(), 'logline'); }
+    function render() {
+      viewEl.textContent = '';
+      var row = document.createElement('div');
+      row.className = 'row';
+      var pre = document.createElement('pre');
+      pre.className = 'mazemap';
+      pre.textContent = lines().join('\n');
+      pre.setAttribute('aria-label', 'Labyrinthkarte');
+      row.appendChild(pre);
+      var pad = document.createElement('div');
+      pad.className = 'grid';
+      pad.style.gridTemplateColumns = 'repeat(3, 44px)';
+      function arrow(label, dir, name) { var b = cellBtn(label, 'arrow', function () { tap(dir + (stepN > 1 ? ' ' + stepN : '')); }, name); b.style.width = '44px'; b.style.height = '44px'; return b; }
+      function gap() { var d = document.createElement('div'); return d; }
+      pad.appendChild(gap()); pad.appendChild(arrow('\u2191', 'nord', 'Norden')); pad.appendChild(gap());
+      pad.appendChild(arrow('\u2190', 'west', 'Westen')); 
+      var mid = cellBtn(stepN + '\u00d7', '', function () { stepN = stepN === 1 ? 5 : 1; render(); }, 'Schrittweite umschalten, jetzt ' + stepN);
+      mid.style.width = '44px'; mid.style.height = '44px'; pad.appendChild(mid);
+      pad.appendChild(arrow('\u2192', 'ost', 'Osten'));
+      pad.appendChild(gap()); pad.appendChild(arrow('\u2193', 'sued', 'Süden')); pad.appendChild(gap());
+      row.appendChild(pad);
+      viewEl.appendChild(row);
+    }
+    function view() { if (panelOn(viewEl)) { render(); } else { text(); } }
     function start() {
       steps = 0; seen = {};
       rows.forEach(function (row, y) { var x = row.indexOf('S'); if (x !== -1) { pos = { x: x, y: y }; } });
@@ -1017,12 +1158,13 @@ form { display: flex; align-items: center; gap: 8px; }
       title: o.title, host: o.host, hints: o.hints,
       chips: [{ c: 'nord' }, { c: 'sued' }, { c: 'west' }, { c: 'ost' }, { c: 'karte' }, { c: 'neu' }],
       help: ['nord / sued / west / ost [n]  n Schritte gehen (auch n s w o)', 'karte ............ Karte anzeigen', 'neu .............. zurück zum Start', '@ = du, # = Wand, E = Ausgang' + (o.fog ? ', ? = unbekannt' : '')],
-      intro: o.story.concat(['', '@ bist du, # sind Wände, E ist der Ausgang.' + (o.fog ? ' Deine Taschenlampe leuchtet nur 2 Felder weit.' : ''), 'Befehle: nord, sued, west, ost (mit Zahl für mehrere Schritte, z. B. ost 3), karte, neu, hinweis']),
+      intro: o.story.concat(['', '@ bist du, # sind Wände, E ist der Ausgang.' + (o.fog ? ' Deine Taschenlampe leuchtet nur 2 Felder weit.' : ''), 'Steuere mit den Pfeilen unter der Karte (die mittlere Taste schaltet auf 5 Schritte um) oder mit Befehlen: nord, sued, west, ost (mit Zahl, z. B. ost 3), karte, neu, hinweis']),
       start: start,
-      after: function () { print(''); show(); },
+      panel: function () { viewEl = document.createElement('div'); viewEl.className = 'wrap'; render(); return viewEl; },
+      after: function () { print(''); view(); },
       run: function (cmd, arg) {
-        if (cmd === 'karte') { show(); return true; }
-        if (cmd === 'neu') { start(); show(); return true; }
+        if (cmd === 'karte') { text(); return true; }
+        if (cmd === 'neu') { start(); view(); return true; }
         if (DIRS4.hasOwnProperty(cmd)) {
           var cnt = arg ? parseInt(arg, 10) : 1;
           if (!(cnt >= 1 && cnt <= 40)) { print('Benutzung: ' + cmd + ' [anzahl 1-40]', 'warn'); return true; }
@@ -1034,7 +1176,7 @@ form { display: flex; align-items: center; gap: 8px; }
             if (cell(nx, ny) === 'E') { break; }
           }
           steps += moved;
-          show();
+          view();
           if (cell(pos.x, pos.y) === 'E') { print('Ausgang erreicht nach ' + steps + ' Schritten!', 'info'); solve(o.n); }
           return true;
         }
@@ -2078,17 +2220,29 @@ form { display: flex; align-items: center; gap: 8px; }
     for (var r = 0; r < 3; r++) { print(slide.slice(r * 3, r * 3 + 3).map(function (v) { return v ? String(v) : '_'; }).join(' '), 'logline'); }
   }
 
+  var slideView = null;
+  function slideRender() {
+    slideView.textContent = '';
+    var grid = document.createElement('div');
+    grid.className = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(3, var(--cell))';
+    slide.forEach(function (v) { grid.appendChild(cellBtn(v ? String(v) : '', v ? '' : 'clue', v ? function () { tap('schiebe ' + v); } : null, v ? 'Kachel ' + v : 'Lücke')); });
+    slideView.appendChild(grid);
+  }
+  function slideView_() { if (panelOn(slideView)) { slideRender(); } else { slideShow(); } }
+
   reg(58, {
     title: 'Das Schiebepuzzle', host: 'ghost@schiebe',
     hints: ['Du schiebst eine Kachel in die Lücke (_). Nur Kacheln direkt neben der Lücke lassen sich bewegen.', 'Ziel ist die Reihenfolge 1 2 3 / 4 5 6 / 7 8 _. Löse zuerst die oberste Reihe, dann die zweite.', 'Die letzten beiden Reihen löst du gemeinsam, zum Schluss kreisen die letzten Kacheln um die Lücke. Mit "neu" beginnst du von vorn.'],
     chips: [{ c: 'brett' }, { c: 'schiebe ', fill: true }, { c: 'neu' }],
     help: ['brett ............. Feld anzeigen', 'schiebe <zahl> ... Kachel in die Lücke schieben', 'neu .............. von vorn beginnen'],
-    intro: ['Ein Schloss besteht aus acht verschiebbaren Kacheln und einer Lücke.', 'Bringe die Kacheln in die Reihenfolge 1 bis 8, die Lücke unten rechts.', '', 'Befehle: brett, schiebe <zahl>, neu, hinweis'],
+    intro: ['Ein Schloss besteht aus acht verschiebbaren Kacheln und einer Lücke.', 'Bringe die Kacheln in die Reihenfolge 1 bis 8, die Lücke unten rechts. Tippe eine Kachel neben der Lücke an.', '', 'Befehle: brett, schiebe <zahl>, neu, hinweis'],
     start: function () { slide = SLIDE_START.slice(); },
-    after: function () { print(''); slideShow(); },
+    panel: function () { slideView = document.createElement('div'); slideView.className = 'wrap'; slideRender(); return slideView; },
+    after: function () { print(''); slideView_(); },
     run: function (cmd, arg) {
       if (cmd === 'brett') { slideShow(); return true; }
-      if (cmd === 'neu') { slide = SLIDE_START.slice(); slideShow(); return true; }
+      if (cmd === 'neu') { slide = SLIDE_START.slice(); slideView_(); return true; }
       if (cmd === 'schiebe') {
         var n = /^\d$/.test(arg.trim()) ? parseInt(arg, 10) : 0;
         if (n < 1 || n > 8) { print('Benutzung: schiebe <zahl von 1 bis 8>', 'warn'); return true; }
@@ -2096,7 +2250,7 @@ form { display: flex; align-items: center; gap: 8px; }
         var near = (Math.abs(i - g) === 3) || (Math.abs(i - g) === 1 && Math.floor(i / 3) === Math.floor(g / 3));
         if (!near) { print('Die Kachel ' + n + ' liegt nicht neben der Lücke.', 'err'); return true; }
         slide[g] = n; slide[i] = 0;
-        slideShow();
+        slideView_();
         if (slide.join('') === '123456780') { print('Das Schloss springt auf!', 'info'); solve(58); }
         return true;
       }
@@ -2139,26 +2293,52 @@ form { display: flex; align-items: center; gap: 8px; }
     }
   }
 
+  var mineView = null, mineMode = 'aufdecken';
+  function mineRender() {
+    mineView.textContent = '';
+    var modes = document.createElement('div');
+    modes.className = 'row';
+    [['aufdecken', 'Aufdecken'], ['flagge', 'Flagge']].forEach(function (m) {
+      modes.appendChild(cellBtn(m[1], 'mode' + (mineMode === m[0] ? ' active' : ''), function () { mineMode = m[0]; mineRender(); }, m[1] + ' (Modus)'));
+    });
+    mineView.appendChild(modes);
+    var grid = document.createElement('div');
+    grid.className = 'grid';
+    grid.style.gridTemplateColumns = 'repeat(6, var(--cell))';
+    for (var r = 0; r < 6; r++) {
+      for (var c = 0; c < 6; c++) {
+        (function (r, c) {
+          var k = r + ',' + c, ch = MINES[r].charAt(c);
+          if (mine.shown[k]) { grid.appendChild(cellBtn(ch === '0' ? '' : ch, 'clue', null, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (ch === '0' ? 'keine Mine in der Nähe' : ch + ' Minen in der Nähe'))); }
+          else { grid.appendChild(cellBtn(mine.flag[k] ? 'F' : '', mine.flag[k] ? 'flag' : 'hid', function () { tap(mineMode + ' ' + (r + 1) + ' ' + (c + 1)); }, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (mine.flag[k] ? 'Flagge' : 'verdeckt'))); }
+        })(r, c);
+      }
+    }
+    mineView.appendChild(grid);
+  }
+  function mineView_() { if (panelOn(mineView)) { mineRender(); } else { mineShow(); } }
+
   reg(59, {
     title: 'Das Minenfeld', host: 'ghost@minen',
     hints: ['Eine Zahl sagt, wie viele der 8 Nachbarfelder Minen sind. Beginne bei einer Zahl, bei der gerade so viele verdeckte Nachbarn übrig sind, wie sie anzeigt: Dann sind alle diese Minen.', 'Mit "flagge z s" markierst du ein sicheres Minenfeld. Mit "aufdecken z s" deckst du ein sicheres Feld auf. Alle Felder sind per Logik lösbar, du musst nie raten.', 'Wenn eine Zahl schon alle ihre Minen hat, sind die restlichen verdeckten Nachbarn sicher. Arbeite dich von oben nach unten vor.'],
     chips: [{ c: 'brett' }, { c: 'aufdecken ', fill: true }, { c: 'flagge ', fill: true }, { c: 'neu' }],
     help: ['brett ............. Feld anzeigen', 'aufdecken <z> <s>  Feld aufdecken (Zeile, Spalte)', 'flagge <z> <s> ... Feld als Mine markieren oder Markierung entfernen', 'neu .............. von vorn beginnen'],
-    intro: ['Ein Minenfeld mit 7 Minen auf 6x6 Feldern. Decke alle sicheren Felder auf, ohne eine Mine zu treffen.', '# = verdeckt, F = Flagge, . = keine Mine in der Nähe, Zahl = Minen in den Nachbarfeldern.', '', 'Befehle: brett, aufdecken <z> <s>, flagge <z> <s>, neu, hinweis'],
+    intro: ['Ein Minenfeld mit 7 Minen auf 6x6 Feldern. Decke alle sicheren Felder auf, ohne eine Mine zu treffen.', 'Zahl = Minen in den Nachbarfeldern. Wähle oben den Modus (Aufdecken oder Flagge) und tippe dann ein Feld an.', '', 'Befehle: brett, aufdecken <z> <s>, flagge <z> <s>, neu, hinweis'],
     start: mineStart,
-    after: function () { print(''); mineShow(); },
+    panel: function () { mineView = document.createElement('div'); mineView.className = 'wrap'; mineRender(); return mineView; },
+    after: function () { print(''); mineView_(); },
     run: function (cmd, arg) {
       if (cmd === 'brett') { mineShow(); return true; }
-      if (cmd === 'neu') { mineStart(); mineShow(); return true; }
+      if (cmd === 'neu') { mineStart(); mineView_(); return true; }
       if (cmd === 'aufdecken' || cmd === 'auf' || cmd === 'flagge') {
         var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
         if (v.length !== 2 || v[0] < 1 || v[0] > 6 || v[1] < 1 || v[1] > 6) { print('Benutzung: ' + cmd + ' <zeile> <spalte>   (1 bis 6)', 'warn'); return true; }
         var r = v[0] - 1, c = v[1] - 1, k = r + ',' + c;
         if (mine.shown[k]) { print('Dieses Feld ist schon aufgedeckt.', 'err'); return true; }
-        if (cmd === 'flagge') { if (mine.flag[k]) { delete mine.flag[k]; } else { mine.flag[k] = true; } mineShow(); return true; }
-        if (MINES[r].charAt(c) === '*') { print('BUMM! Das war eine Mine. Das Feld wird zurückgesetzt.', 'err'); mineStart(); mineShow(); return true; }
+        if (cmd === 'flagge') { if (mine.flag[k]) { delete mine.flag[k]; } else { mine.flag[k] = true; } mineView_(); return true; }
+        if (MINES[r].charAt(c) === '*') { print('BUMM! Das war eine Mine. Das Feld wird zurückgesetzt.', 'err'); mineStart(); mineView_(); return true; }
         mineReveal(r, c);
-        mineShow();
+        mineView_();
         var open = Object.keys(mine.shown).length;
         if (open === 36 - 7) { print('Alle sicheren Felder sind aufgedeckt!', 'info'); solve(59); }
         return true;
@@ -2190,28 +2370,11 @@ form { display: flex; align-items: center; gap: 8px; }
     return true;
   }
 
-  reg(60, {
-    title: 'Das Bilderrätsel', host: 'ghost@bild',
-    hints: ['Die Zahlen am Rand sagen, wie viele zusammenhängende Felder in dieser Zeile oder Spalte gefüllt sind. Mehrere Zahlen bedeuten mehrere Blöcke mit mindestens einer Lücke dazwischen.', 'Beginne mit Zeilen und Spalten, die voll sind: [5] füllt die ganze Reihe. Und [1 1 1] in einer Spalte der Länge 5 ist nur auf eine Weise möglich.', 'Mit "fuelle z s" füllst du ein Feld, nochmal fuelle leert es wieder. Das fertige Bild ist ein Schloss.'],
-    chips: [{ c: 'brett' }, { c: 'fuelle ', fill: true }, { c: 'neu' }],
-    help: ['brett ............. Feld und Zahlen anzeigen', 'fuelle <z> <s> ... Feld füllen oder leeren (Zeile, Spalte)', 'neu .............. alles leeren'],
-    intro: ['Ein Bilderrätsel (Nonogramm) schützt das Schloss. Die Zahlen am Rand verraten, wie viele Felder in einer Reihe nacheinander gefüllt sind.', 'Fülle das Feld so, dass alle Zeilen- und Spaltenzahlen stimmen.', '', 'Befehle: brett, fuelle <zeile> <spalte>, neu, hinweis'],
-    start: function () { nono = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); },
-    after: function () { print(''); nonoShow(); },
-    run: function (cmd, arg) {
-      if (cmd === 'brett') { nonoShow(); return true; }
-      if (cmd === 'neu') { nono = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); nonoShow(); return true; }
-      if (cmd === 'fuelle' || cmd === 'toggle') {
-        var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
-        if (v.length !== 2 || v[0] < 1 || v[0] > 5 || v[1] < 1 || v[1] > 5) { print('Benutzung: fuelle <zeile> <spalte>   (1 bis 5)', 'warn'); return true; }
-        nono[v[0] - 1][v[1] - 1] ^= 1;
-        nonoShow();
-        if (nonoDone()) { print('Das Bild stimmt: Es ist ein Schloss!', 'info'); solve(60); }
-        return true;
-      }
-      return false;
-    }
-  });
+  reg(60, nonoLevel({
+    n: 60, title: 'Das Bilderrätsel', host: 'ghost@bild', pic: NONO_PIC,
+    story: ['Ein Bilderrätsel (Nonogramm) schützt das Schloss.'],
+    hints: ['Die Zahlen am Rand sagen, wie viele zusammenhängende Felder in dieser Zeile oder Spalte gefüllt sind. Mehrere Zahlen bedeuten mehrere Blöcke mit mindestens einer Lücke dazwischen.', 'Beginne mit Zeilen und Spalten, die voll sind: [5] füllt die ganze Reihe. Und [1 1 1] in einer Spalte der Länge 5 ist nur auf eine Weise möglich.', 'Mit "fuelle z s" füllst du ein Feld, nochmal fuelle leert es wieder. Das fertige Bild ist ein Schloss.']
+  }));
 
   /* ---------- Level 61-80 ---------- */
 
@@ -2395,13 +2558,29 @@ form { display: flex; align-items: center; gap: 8px; }
   function nonoLevel(o) {
     var rowsC = o.pic.map(function (r) { return nonoClue(r.split('').map(Number)); });
     var colsC = [0, 1, 2, 3, 4].map(function (c) { return nonoClue(o.pic.map(function (r) { return +r.charAt(c); })); });
-    var g = [];
+    var g = [], viewEl = null;
     function fresh() { g = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); }
-    function show() {
+    function text() {
       print('Spalten: ' + colsC.map(function (c) { return '[' + c.join(' ') + ']'; }).join(' '), 'logline');
       print('    1 2 3 4 5', 'dim');
       g.forEach(function (row, r) { print((r + 1) + '   ' + row.map(function (v) { return v ? '#' : '.'; }).join(' ') + '   [' + rowsC[r].join(' ') + ']', 'logline'); });
     }
+    function render() {
+      viewEl.textContent = '';
+      var grid = document.createElement('div');
+      grid.className = 'grid';
+      grid.style.gridTemplateColumns = 'repeat(6, var(--cell))';
+      grid.appendChild(cellBtn('', 'clue', null));
+      colsC.forEach(function (c, i) { grid.appendChild(cellBtn(c.join('\n'), 'clue', null, 'Spalte ' + (i + 1) + ': ' + c.join(' '))); });
+      g.forEach(function (row, r) {
+        grid.appendChild(cellBtn(rowsC[r].join(' '), 'clue', null, 'Zeile ' + (r + 1) + ': ' + rowsC[r].join(' ')));
+        row.forEach(function (v, c) {
+          grid.appendChild(cellBtn('', v ? 'on' : '', function () { tap('fuelle ' + (r + 1) + ' ' + (c + 1)); }, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (v ? 'gefüllt' : 'leer')));
+        });
+      });
+      viewEl.appendChild(grid);
+    }
+    function view() { if (panelOn(viewEl)) { render(); } else { text(); } }
     function done() {
       for (var r = 0; r < 5; r++) { if (nonoClue(g[r]).join() !== rowsC[r].join()) { return false; } }
       for (var c = 0; c < 5; c++) { if (nonoClue(g.map(function (row) { return row[c]; })).join() !== colsC[c].join()) { return false; } }
@@ -2411,17 +2590,18 @@ form { display: flex; align-items: center; gap: 8px; }
       title: o.title, host: o.host, hints: o.hints,
       chips: [{ c: 'brett' }, { c: 'fuelle ', fill: true }, { c: 'neu' }],
       help: ['brett ............. Feld und Zahlen anzeigen', 'fuelle <z> <s> ... Feld füllen oder leeren (Zeile, Spalte)', 'neu .............. alles leeren'],
-      intro: o.story.concat(['', 'Die Zahlen am Rand verraten, wie viele Felder in einer Reihe nacheinander gefüllt sind. Fülle das Feld so, dass alle Zeilen- und Spaltenzahlen stimmen.', 'Befehle: brett, fuelle <zeile> <spalte>, neu, hinweis']),
+      intro: o.story.concat(['', 'Die Zahlen am Rand verraten, wie viele Felder in einer Reihe nacheinander gefüllt sind. Tippe Felder an, bis alle Zeilen- und Spaltenzahlen stimmen.', 'Befehle: brett, fuelle <zeile> <spalte>, neu, hinweis']),
       start: fresh,
-      after: function () { print(''); show(); },
+      panel: function () { viewEl = document.createElement('div'); viewEl.className = 'wrap'; render(); return viewEl; },
+      after: function () { print(''); view(); },
       run: function (cmd, arg) {
-        if (cmd === 'brett') { show(); return true; }
-        if (cmd === 'neu') { fresh(); show(); return true; }
+        if (cmd === 'brett') { text(); return true; }
+        if (cmd === 'neu') { fresh(); view(); return true; }
         if (cmd === 'fuelle') {
           var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
           if (v.length !== 2 || v[0] < 1 || v[0] > 5 || v[1] < 1 || v[1] > 5) { print('Benutzung: fuelle <zeile> <spalte>   (1 bis 5)', 'warn'); return true; }
           g[v[0] - 1][v[1] - 1] ^= 1;
-          show();
+          view();
           if (done()) { print('Das Bild stimmt!', 'info'); solve(o.n); }
           return true;
         }
@@ -2676,6 +2856,71 @@ form { display: flex; align-items: center; gap: 8px; }
   var promptEl = document.getElementById('prompt');
   var progressEl = document.getElementById('progress');
 
+  var panelEl = document.getElementById('panel');
+  var goalEl = document.getElementById('goal');
+
+  function setPanel(node) {
+    panelEl.textContent = '';
+    if (node) { panelEl.appendChild(node); panelEl.hidden = false; } else { panelEl.hidden = true; }
+    out.scrollTop = out.scrollHeight;
+  }
+  function panelOn(node) { return !!node && node.parentNode === panelEl; }
+  function cellBtn(label, cls, onTap, aria) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'cell' + (cls ? ' ' + cls : '');
+    b.textContent = label;
+    if (aria) { b.setAttribute('aria-label', aria); }
+    if (onTap) { b.addEventListener('click', onTap); } else { b.disabled = true; }
+    return b;
+  }
+  function tap(cmd) { sfx.key(); run(cmd, true); }
+
+  var GOALS = {
+    1: 'Finde das Passwort von mfalke in den Dateien.', 2: 'Knacke die Caesar-Chiffre und nenne das Codewort.', 3: 'Finde in der Logdatei die IP-Adresse des Eindringlings.',
+    4: 'Entschlüssele das Base64-Paket: Wie lautet das Schlüsselwort?', 5: 'Lies die Bitfolge und finde die vierstellige PIN.', 6: 'Welcher Rechner im Netz muss am dringendsten abgesichert werden?',
+    7: 'Entschlüssele die drei Teile und öffne den Tresor.', 8: 'Entschlüssele den Funkspruch (Vigenère) und nenne das Lösungswort.', 9: 'Übersetze den Morsecode: Wo ist der Treffpunkt?',
+    10: 'Welches Wort verstecken die Zeilenanfänge der Mails?', 11: 'Wer ist der Täter? Genau eine Aussage ist wahr.', 12: 'Finde im Dateisystem das versteckte Passwort.',
+    13: 'Entschlüssele die SMS (Handytasten): Wo ist der Treffpunkt?', 14: 'Welcher Lizenzschlüssel ist gültig? Finde die Regel.', 15: 'Öffne die Stahltür: Finde Keycard und Code.',
+    16: 'Schäle die drei Schichten ab und finde das Schlüsselwort.', 17: 'Errate den vierstelligen Code (Mastermind).',
+    18: 'Mach das gespiegelte Alphabet rückgängig: Lösungswort?', 19: 'Lies die Zahlenpaare mit dem 5x5-Gitter: Lösungswort?', 20: 'Wandle die Zahlen in Buchstaben um: Lösungswort?',
+    21: 'Lies die ersten Buchstaben der Funkwörter: Lösungswort?', 22: 'Wandle die %-Zeichen in Text um: Lösungswort?', 23: 'Übersetze die Hackersprache (Leetspeak): Lösungswort?',
+    24: 'Löse die Zaunschiene auf: Lösungswort?', 25: 'Nimm den Tastatur-Versatz zurück: Lösungswort?', 26: 'Entschlüssele per XOR (Schlüssel in der Notiz): Lösungswort?',
+    27: 'Entferne die drei Schichten in der richtigen Reihenfolge.', 28: 'Wandle die ASCII-Zahlen in Text um: Lösungswort?', 29: 'Wer ist der Täter? Genau zwei Aussagen sind wahr.',
+    30: 'Wer ist der Täter? Genau drei Aussagen sind wahr.', 31: 'Finde den dreistelligen Code aus den fünf Hinweisen.', 32: 'Nenne bei jeder Zahlenfolge die nächste Zahl.',
+    33: 'Beantworte alle Fragen zu Netzwerken.', 34: 'Beantworte alle Fragen zu Verschlüsselung.', 35: 'Errate die Zahl von 1 bis 1000 in 10 Versuchen.',
+    36: 'Schalte alle Lichter aus (3x3).', 37: 'Schalte alle Lichter aus (4x4).', 38: 'Fülle das Sudoku mit den Zahlen 1 bis 4.',
+    39: 'Fülle das schwere Sudoku mit den Zahlen 1 bis 4.', 40: 'Finde den Ausgang (E) des Labyrinths.', 41: 'Finde den Ausgang im dunklen Labyrinth.',
+    42: 'Versetze 3 Scheiben von Turm A nach C.', 43: 'Versetze 4 Scheiben von Turm A nach C.', 44: 'Nimm Hölzer: Der Computer muss das letzte nehmen.',
+    45: 'Errate das Passwort-Wort (5 Buchstaben).', 46: 'Finde das Passwort von Jonas Berg in den Dateien.', 47: 'Welche Ports sind von außen erreichbar?',
+    48: 'Finde im Dateisystem das Datenbank-Passwort (mit ROT13).', 49: 'Sammle Schlüssel, Lampe und Batterie und finde den Code.', 50: 'Vier Schichten: Wähle Werkzeuge und Reihenfolge selbst.',
+    51: 'Welche Nutzer haben ein zu schwaches Passwort? (melde ...)', 52: 'Beende den Betrugsanruf richtig (Nummer wählen).', 53: 'Bringe Virus, Datei und Backup nach rechts, ohne Schaden.',
+    54: 'Stelle die Schalter: Lampe 1 und 3 an, Lampe 2 aus.', 55: 'Kampagne in fünf Kapiteln: Triff kluge Entscheidungen.', 56: 'Finde den Nutzer mit nächtlichem, erfolgreichem Export von außen.',
+    57: 'Berechne das gemeinsame Geheimnis (Diffie-Hellman).', 58: 'Bringe die Kacheln in die Reihenfolge 1 bis 8.', 59: 'Decke alle sicheren Felder auf, ohne eine Mine zu treffen.',
+    60: 'Fülle das Bild nach den Zahlen am Rand (Nonogramm).', 61: 'Morse und gespiegeltes Alphabet: Lösungswort?', 62: 'Handytasten und ROT13: Lösungswort?',
+    63: 'Bits und Zaunschiene: Lösungswort?', 64: 'Base64 und Vigenère (Schlüssel als Rätsel): Lösungswort?', 65: 'Drei Schichten: Hex, Gitter, Spiegelalphabet.',
+    66: 'Base64 und XOR (Schlüssel in der Notiz): Lösungswort?', 67: 'Beantworte alle Hardware-Fragen.', 68: 'Beantworte alle Sicherheits-Fragen.',
+    69: 'Rechne Zahlensysteme um (binär, hex).', 70: 'Wer ist der Täter? Genau eine Aussage ist wahr.', 71: 'Finde den dreistelligen Code aus den vier Hinweisen.',
+    72: 'Fülle das Sudoku mit nur fünf Vorgaben.', 73: 'Schalte alle Lichter aus (5x5).', 74: 'Finde den Ausgang im riesigen dunklen Labyrinth.',
+    75: 'Versetze 5 Scheiben von Turm A nach C.', 76: 'Nim: Nimm das letzte Holz.', 77: 'Fülle das zweite Bild nach den Zahlen am Rand.',
+    78: 'Errate das Passwort-Wort (6 Buchstaben).', 79: 'Notfallteam: Alarm, Spur, Konto, Meldung (vier Kapitel).', 80: 'Fünf Schichten, zwölf Werkzeuge: Lösungswort?'
+  };
+  function renderGoal() {
+    var n = state.level;
+    if (!n) { goalEl.hidden = true; goalEl.classList.remove('open'); goalEl.setAttribute('aria-expanded', 'false'); return; }
+    goalEl.textContent = '';
+    var lv = document.createElement('span');
+    lv.className = 'lv';
+    lv.textContent = 'Level ' + n + ' · ';
+    goalEl.appendChild(lv);
+    goalEl.appendChild(document.createTextNode(GOALS[n] || (EXTRA[n] && EXTRA[n].intro ? EXTRA[n].intro[0] : '')));
+    goalEl.hidden = false;
+  }
+  goalEl.addEventListener('click', function () {
+    var open = goalEl.classList.toggle('open');
+    goalEl.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var LINE_DELAY = reduceMotion ? 0 : 12;
   var MAX_LINES = 1500;
@@ -2787,7 +3032,7 @@ form { display: flex; align-items: center; gap: 8px; }
     });
   }
 
-  function refresh() { renderStatus(); renderChips(); }
+  function refresh() { renderStatus(); renderChips(); renderGoal(); }
 
   /* ---------- Hilfsfunktionen ---------- */
 
@@ -2843,6 +3088,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   function showMenu(all) {
     state.level = 0;
+    setPanel(null);
     refresh();
     var first = state.solved.indexOf(false);
     var center = first === -1 ? LEVEL_COUNT - 1 : first;
@@ -2917,6 +3163,7 @@ form { display: flex; align-items: center; gap: 8px; }
       print('Level ' + n + ' ist gesperrt. Löse zuerst Level ' + (n - 1) + '.', 'err');
       return;
     }
+    setPanel(null);
     if (EXTRA[n] && EXTRA[n].start) { EXTRA[n].start(); }
     state.level = n;
     refresh();
@@ -2929,6 +3176,7 @@ form { display: flex; align-items: center; gap: 8px; }
       if (n === 13) { print(''); print(t9Encode(L13_PLAIN), 'cipher'); }
       if (n === 15) { print(''); describeRoom(); }
       if (n === 16) { print(''); print(btoa(rot13(L16_PLAIN.split('').reverse().join(''))), 'cipher'); }
+      if (EXTRA[n].panel) { setPanel(EXTRA[n].panel()); }
       if (EXTRA[n].after) { EXTRA[n].after(); }
     } else if (n === 1) {
       printAll([
@@ -2995,6 +3243,7 @@ form { display: flex; align-items: center; gap: 8px; }
   function solve(n) {
     state.solved[n - 1] = true;
     saveProgress();
+    setPanel(null);
     print('');
     print('>>> ZUGRIFF GEWÄHRT <<<', 'ok');
     print('Mission ' + n + ' abgeschlossen!', 'ok');
@@ -3533,10 +3782,10 @@ form { display: flex; align-items: center; gap: 8px; }
 
   /* ---------- Befehlsverarbeitung ---------- */
 
-  function run(raw) {
+  function run(raw, quiet) {
     var text = String(raw).trim();
     if (!text) { return; }
-    print('$ ' + text, 'cmd');
+    if (!quiet) { print('$ ' + text, 'cmd'); }
     var m = text.match(/^(\S+)\s*([\s\S]*)$/);
     var cmd = norm(m[1]);
     var arg = m[2].trim();

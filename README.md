@@ -57,6 +57,8 @@ Du bist „Ghost“ und löst 80 Missionen. Gib Befehle ein oder tippe die Knöp
 | 79 – Operation Vorfall | Mini-Kampagne, diesmal als Verteidiger: Alarm, Spurensuche im Log, Konto finden, richtig melden. |
 | 80 – Die Meisterprüfung | Fünf Schichten, zwölf Werkzeuge, die Reihenfolge findest du selbst heraus. |
 
+Oben unter der Kopfzeile steht immer das **Ziel** des aktuellen Levels (antippen zum Aufklappen). Bei den Rätselfeldern (Lichter aus, Sudoku, Labyrinth, Schiebepuzzle, Minenfeld, Bilderrätsel) tippst du die **Felder direkt an**. Die Befehle funktionieren trotzdem weiter.
+
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
 - `hilfe` – Befehlsübersicht
