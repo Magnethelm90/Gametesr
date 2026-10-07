@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst sieben Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst zwölf Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -23,7 +23,12 @@ Du bist „Ghost“ und löst sieben Missionen. Gib Befehle ein oder tippe die K
 | 4 – Das Datendepot | Wandle ein Base64-Datenpaket zurück und finde das Schlüsselwort. |
 | 5 – Das Signal | Lies eine Bitfolge (8 Bit pro Zeichen) und finde die PIN. |
 | 6 – Der Netzscan | Finde im fiktiven Firmennetz den Rechner, der am dringendsten abgesichert werden muss. |
-| 7 – Der Tresor | Finale: Drei Teile, drei Verfahren (ROT13, Hex, rückwärts). |
+| 7 – Der Tresor | Drei Teile, drei Verfahren (ROT13, Hex, rückwärts). |
+| 8 – Das Funkfeuer | Knacke eine Vigenère-Chiffre. Das Schlüsselwort steckt in einem Rätsel. |
+| 9 – Das Morsesignal | Übersetze ein Lichtsignal in Morsecode. |
+| 10 – Die Geheimmail | Finde die versteckte Botschaft in harmlosen Mails (Akrostichon). |
+| 11 – Das Alibi | Logikrätsel: Wer von vier Verdächtigen ist der Täter? |
+| 12 – Das Mainframe | Finale: Navigiere mit `ls`, `cd` und `cat` durch ein Dateisystem und finde das versteckte Passwort. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 

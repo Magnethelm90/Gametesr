@@ -165,8 +165,8 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 7;
-  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor'];
+  var LEVEL_COUNT = 12;
+  var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe'];
 
   // Level 1
   var L1_PASSWORD = 'waldi1984';
@@ -275,6 +275,94 @@ form { display: flex; align-items: center; gap: 8px; }
   };
   var L7_ANSWER = L7_PARTS.join('-');
 
+  // Level 8: Vigenere
+  var L8_KEY = 'LICHT';
+  var L8_PLAIN = 'DAS LOSUNGSWORT IST MONDSCHEIN';
+  var L8_ANSWER = 'MONDSCHEIN';
+  var L8_FILES = {
+    'funk.txt': ['Abgefangener Funkspruch:', '  ' + vigenere(L8_PLAIN, L8_KEY, 1)],
+    'notiz.txt': [
+      'Fund auf dem Schreibtisch des Funkers:',
+      '  "Verschlüsselt mit einem Schlüsselwort. Jeder Buchstabe wird',
+      '   anders verschoben, je nach Buchstabe des Wortes.',
+      '   Das Wort? Das braucht man, um im Dunkeln zu sehen.',
+      '   (5 Buchstaben)"'
+    ]
+  };
+
+  // Level 9: Morse
+  var MORSE = {
+    A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....', I: '..',
+    J: '.---', K: '-.-', L: '.-..', M: '--', N: '-.', O: '---', P: '.--.', Q: '--.-', R: '.-.',
+    S: '...', T: '-', U: '..-', V: '...-', W: '.--', X: '-..-', Y: '-.--', Z: '--..'
+  };
+  var L9_PLAIN = 'TREFFPUNKT HAFEN';
+  var L9_ANSWER = 'HAFEN';
+
+  // Level 10: Akrostichon (Anfangsbuchstaben der Zeilen)
+  var L10_FILES = {
+    'mail1.txt': [
+      'Betreff: Terminplanung',
+      'Hallo zusammen,',
+      'morgen um 10 Uhr ist die Wochenbesprechung.',
+      'Bitte bringt eure Berichte mit.',
+      'Danach gibt es Kuchen in der Küche.',
+      'Viele Grüße, Jonas'
+    ],
+    'mail2.txt': [
+      'Betreff: Kleines Update',
+      'Kurzes Update vom Standort:',
+      'Es läuft alles planmäßig.',
+      'Leider ist der Drucker wieder defekt.',
+      'Lieferung der Ersatzteile kommt Freitag.',
+      'Eventuell brauchen wir Hilfe vom Support.',
+      'Rückmeldung bitte bis Montag.',
+      'Gruß, Tom'
+    ],
+    'mail3.txt': [
+      'Betreff: Urlaub',
+      'Hi,',
+      'ich bin nächste Woche nicht da.',
+      'Meldet euch bei Fragen bei Lisa.',
+      'Danke und bis bald, Sven'
+    ]
+  };
+  var L10_ANSWER = 'KELLER';
+
+  // Level 11: Alibi-Logik
+  var L11_SUSPECTS = ['anna', 'ben', 'carla', 'david'];
+  var L11_STATEMENTS = [
+    'Anna:  "Ben war es."',
+    'Ben:   "Carla war es."',
+    'Carla: "David sagt die Wahrheit."',
+    'David: "Anna lügt."'
+  ];
+  var L11_ANSWER = 'ben';
+
+  // Level 12: Dateisystem
+  function dir(c) { return { t: 'd', c: c }; }
+  function file(lines) { return { t: 'f', l: lines }; }
+  var L12_FS = dir({
+    home: dir({ ghost: dir({
+      'notizen.txt': file(['Notiz an mich selbst:', 'Der Admin versteckt Dinge gern.', 'Versteckte Ordner und Dateien beginnen mit einem Punkt.', 'Zeige sie mit: ls -a']),
+      'todo.txt': file(['- Backup prüfen', '- Kaffee kaufen'])
+    }) }),
+    srv: dir({
+      archiv: dir({
+        '2023.txt': file(['Jahresbericht 2023: nichts Besonderes.']),
+        '2024.txt': file(['Jahresbericht 2024: Serverumzug geplant.'])
+      }),
+      '.geheim': dir({
+        'tagebuch.txt': file(['Tagebuch des Admins:', 'Das Passwort für das Mainframe steht in schluessel.txt, gleich hier im Ordner.']),
+        'schluessel.txt': file(['Passwort: VORTEX-NULL-7'])
+      })
+    }),
+    etc: dir({ 'motd.txt': file(['Willkommen auf MAINFRAME.', 'Unbefugter Zutritt verboten.']) }),
+    'var': dir({ log: dir({ 'system.log': file(['Alles ruhig.']) }) })
+  });
+  var L12_ANSWER = 'VORTEX-NULL-7';
+  var fsCwd = ['home', 'ghost'];
+
   var HINTS = {
     1: [
       'Schau dir alle Dateien an. Eine davon verrät die Regel für das Passwort.',
@@ -306,11 +394,71 @@ form { display: flex; align-items: center; gap: 8px; }
       'Befehle: "rot13 <text>", "hex <text>" und "umkehren <text>".',
       'Die drei Wörter in der Reihenfolge Teil 1, 2, 3 mit Bindestrichen verbinden, z. B. wort1-wort2-wort3.'
     ],
+    8: [
+      'Beim Vigenère-Verfahren hat jeder Buchstabe eine eigene Verschiebung. Sie hängt vom passenden Buchstaben des Schlüsselworts ab (A = 0, B = 1, ...).',
+      'Das Schlüsselwort steht als Rätsel in notiz.txt. Mit "key <wort>" probierst du es aus.',
+      'Es ist das Wort für das, was man im Dunkeln anmacht: fünf Buchstaben.'
+    ],
+    9: [
+      'Morsecode: Punkte und Striche. Zwischen Buchstaben ist ein Leerzeichen, zwischen Wörtern ein "/".',
+      '"tabelle" zeigt dir das Alphabet. "decode <morse>" übersetzt den ganzen Funkspruch.',
+      'Gib nur das zweite Wort der Nachricht ab.'
+    ],
+    10: [
+      'Ein Akrostichon versteckt Wörter in den Anfangsbuchstaben der Zeilen.',
+      'Lies die Mails von oben nach unten und achte nur auf den ersten Buchstaben jeder Textzeile. "Betreff" und die Grußzeile zählen nicht dazu.',
+      'Nur eine der drei Mails enthält eine Botschaft.'
+    ],
+    11: [
+      'Probiere jede Person als Täter durch und zähle, wie viele Aussagen dann wahr sind.',
+      'Genau eine Aussage ist wahr. Bei Carla und David verweisen die Aussagen aufeinander.',
+      'Wenn Ben der Täter wäre: Anna spricht die Wahrheit, alle anderen lügen. Prüfe, ob das passt.'
+    ],
+    12: [
+      'Du bewegst dich wie in einem echten Terminal: ls, cd, cat, pwd.',
+      'Versteckte Ordner beginnen mit einem Punkt und erscheinen nur mit "ls -a". Schau dir /srv an.',
+      'Im versteckten Ordner liegt eine Datei mit dem Passwort. Gib es mit "login <passwort>" ein.'
+    ],
     3: [
       'Ein Eindringling versucht oft mehrmals, sich einzuloggen, bevor es klappt.',
       'Aber nicht jeder mit Fehlversuchen ist böse. Wer hat danach Daten heruntergeladen UND Spuren verwischt?',
       'Nutze "suche download" und "suche lösch" und vergleiche die IP-Adressen.'
     ]
+  };
+
+  var EXTRA = {
+    8: {
+      chips: [{ c: 'dateien' }, { c: 'lies funk.txt' }, { c: 'lies notiz.txt' }, { c: 'key ', fill: true }, { c: 'losung ', fill: true }],
+      intro: ['Ein weiterer Funkspruch, diesmal mit Schlüsselwort verschlüsselt (Vigenère).', 'Finde das Schlüsselwort und das Lösungswort.', '', 'Befehle: dateien, lies <datei>, key <wort>, losung <wort>, hinweis'],
+      help: ['dateien / lies <datei>', 'key <wort> ....... Funkspruch mit Schlüsselwort entschlüsseln', 'losung <wort> .... Lösungswort abgeben'],
+      run: level8
+    },
+    9: {
+      chips: [{ c: 'funk' }, { c: 'tabelle' }, { c: 'decode ', fill: true }, { c: 'wort ', fill: true }],
+      intro: ['Ein Leuchtturm sendet Lichtsignale: kurz (.) und lang (-).', 'Übersetze den Morsecode und finde den Treffpunkt.', '', 'Befehle: funk, tabelle, decode <morse>, wort <wort>, hinweis'],
+      help: ['funk ............. Morsesignal anzeigen', 'tabelle .......... Morsealphabet', 'decode <morse> ... Morsecode übersetzen', 'wort <wort> ...... Treffpunkt abgeben'],
+      run: level9
+    },
+    10: {
+      chips: [{ c: 'dateien' }, { c: 'lies mail1.txt' }, { c: 'lies mail2.txt' }, { c: 'lies mail3.txt' }, { c: 'botschaft ', fill: true }],
+      intro: ['Ein Agent schmuggelt Botschaften in harmlosen Firmenmails.', 'Eine der drei Mails enthält ein verstecktes Wort. Finde es.', '', 'Befehle: dateien, lies <datei>, botschaft <wort>, hinweis'],
+      help: ['dateien / lies <datei>', 'botschaft <wort> . verstecktes Wort abgeben'],
+      run: level10
+    },
+    11: {
+      chips: [{ c: 'aussagen' }, { c: 'regel' }, { c: 'anklagen ', fill: true }],
+      intro: ['Im Büro wurde etwas gestohlen. Vier Personen werden befragt. Eine davon ist der Täter.', 'Finde ihn mit Logik.', '', 'Befehle: aussagen, regel, anklagen <name>, hinweis'],
+      help: ['aussagen ......... Aussagen der Verdächtigen', 'regel ............ Was über die Aussagen bekannt ist', 'anklagen <name> .. Täter benennen'],
+      run: level11
+    },
+    12: {
+      host: function () { return 'ghost@mainframe:/' + fsCwd.join('/'); },
+      chips: [{ c: 'ls' }, { c: 'ls -a' }, { c: 'pwd' }, { c: 'cd ', fill: true }, { c: 'cat ', fill: true }, { c: 'login ', fill: true }],
+      intro: ['Das Finale: Du sitzt am Terminal des Mainframes.', 'Irgendwo liegt das Passwort versteckt. Navigiere durch die Ordner und finde es.', '', 'Befehle: ls, ls -a, cd <ordner>, cat <datei>, pwd, login <passwort>, hinweis'],
+      help: ['ls [-a] [pfad] ... Inhalt anzeigen (-a: auch Versteckte)', 'cd <ordner> ...... Ordner wechseln (.. = zurück, / = Wurzel)', 'cat <datei> ...... Datei lesen', 'pwd .............. aktueller Pfad', 'login <passwort> . Mainframe öffnen'],
+      start: function () { fsCwd = ['home', 'ghost']; },
+      run: level12
+    }
   };
 
   /* ---------- Zustand & Speicher ---------- */
@@ -379,11 +527,13 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Oberfläche: Prompt, Fortschritt, Chips ---------- */
 
   function hostName() {
-    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway', 'ghost@depot', 'ghost@signal', 'ghost@netz', 'ghost@tresor'][state.level];
+    if (EXTRA[state.level] && EXTRA[state.level].host) { return EXTRA[state.level].host(); }
+    return ['ghost@shell', 'ghost@nebula-7', 'ghost@funk-3', 'ghost@gateway', 'ghost@depot', 'ghost@signal', 'ghost@netz', 'ghost@tresor', 'ghost@funk-8', 'ghost@morse', 'ghost@postfach', 'ghost@verhoer', 'ghost@mainframe'][state.level];
   }
 
   function renderStatus() {
-    promptEl.textContent = hostName() + ':~$';
+    var host = hostName();
+    promptEl.textContent = host.indexOf(':') === -1 ? host + ':~$' : host + '$';
     var dots = state.solved.map(function (s, i) {
       return s ? '<span class="done">[' + (i + 1) + ']</span>' : '[' + (i + 1) + ']';
     });
@@ -403,7 +553,9 @@ form { display: flex; align-items: center; gap: 8px; }
       ];
     }
     var base;
-    if (state.level === 1) {
+    if (EXTRA[state.level]) {
+      base = EXTRA[state.level].chips;
+    } else if (state.level === 1) {
       base = [
         { c: 'dateien' }, { c: 'lies notiz.txt' }, { c: 'lies profil.txt' },
         { c: 'lies chat.log' }, { c: 'login ', fill: true }
@@ -545,6 +697,8 @@ form { display: flex; align-items: center; gap: 8px; }
       printAll(['', 'MISSION 5:', 'signal ........... Bitfolge anzeigen', 'byte <n> ......... n-tes Zeichen (8 Bit) entschlüsseln', 'bin <bits> ....... Bits in Text umwandeln', 'pin <zahl> ....... PIN abgeben']);
     } else if (state.level === 6) {
       printAll(['', 'MISSION 6:', 'scan ............. Netzwerk-Scan anzeigen', 'info <host> ...... Details zu einem Rechner', 'ziel <host> ...... Schwächsten Rechner melden']);
+    } else if (EXTRA[state.level]) {
+      printAll(['', 'MISSION ' + state.level + ':'].concat(EXTRA[state.level].help));
     } else if (state.level === 7) {
       printAll(['', 'MISSION 7:', 'dateien / lies <datei>', 'rot13 <text> ..... ROT13 umkehren', 'hex <text> ....... Hex in Text umwandeln', 'umkehren <text> .. Text rückwärts lesen', 'tresor <a-b-c> ... Tresor öffnen']);
     }
@@ -572,7 +726,13 @@ form { display: flex; align-items: center; gap: 8px; }
     refresh();
     print('');
     print('=== MISSION ' + n + ': ' + TITLES[n].toUpperCase() + ' ===', 'head');
-    if (n === 1) {
+    if (EXTRA[n]) {
+      if (EXTRA[n].start) { EXTRA[n].start(); }
+      refresh();
+      printAll(EXTRA[n].intro);
+      if (n === 8) { print(''); print(vigenere(L8_PLAIN, L8_KEY, 1), 'cipher'); }
+      if (n === 9) { print(''); print(morseText(), 'cipher'); }
+    } else if (n === 1) {
       printAll([
         'Ziel: Server NEBULA-7 (frei erfunden).',
         'Das Konto "mfalke" ist passwortgeschützt. Finde heraus, wie das Passwort lautet.',
@@ -618,7 +778,7 @@ form { display: flex; align-items: center; gap: 8px; }
       ]);
     } else {
       printAll([
-        'Das Finale: ein Tresor, geschützt durch drei Teile, jeder anders verschleiert.',
+        'Ein Tresor, geschützt durch drei Teile, jeder anders verschleiert.',
         'Entschlüssele alle drei und öffne den Tresor.',
         '',
         'Befehle: dateien, lies <datei>, rot13, hex, umkehren, tresor <a-b-c>, hinweis'
@@ -650,7 +810,7 @@ form { display: flex; align-items: center; gap: 8px; }
       printAll([
         '',
         '*** ALLE MISSIONEN GELÖST ***',
-        'Du hast alle sieben Rätsel geknackt. Gut gemacht, Ghost.',
+        'Du hast alle ' + LEVEL_COUNT + ' Rätsel geknackt. Gut gemacht, Ghost.',
         'Alles hier war frei erfunden. Nutze dein Wissen nur legal und verantwortungsvoll.'
       ], 'ok');
       print('Tippe "level 1" zum erneuten Spielen oder "reset" für einen frischen Start.', 'dim');
@@ -844,6 +1004,143 @@ form { display: flex; align-items: center; gap: 8px; }
     return false;
   }
 
+  function vigenere(text, key, dir) {
+    var k = 0;
+    return text.replace(/[A-Z]/g, function (ch) {
+      var shift = key.charCodeAt(k % key.length) - 65;
+      k++;
+      return String.fromCharCode((ch.charCodeAt(0) - 65 + dir * shift + 26) % 26 + 65);
+    });
+  }
+
+  function level8(cmd, arg) {
+    if (fileCmd(L8_FILES, cmd, arg)) { return true; }
+    if (cmd === 'key') {
+      var key = norm(arg).toUpperCase().replace(/[^A-Z]/g, '');
+      if (!key) { print('Benutzung: key <schluesselwort>', 'warn'); return true; }
+      print('Mit "' + key + '": ' + vigenere(vigenere(L8_PLAIN, L8_KEY, 1), key, -1), 'info');
+      return true;
+    }
+    if (cmd === 'losung' || cmd === 'code') {
+      if (!arg) { print('Benutzung: losung <wort>', 'warn'); return true; }
+      if (norm(arg).toUpperCase().trim() === L8_ANSWER) { solve(8); } else { print('Falsches Lösungswort.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function morseText() {
+    return L9_PLAIN.split(' ').map(function (w) {
+      return w.split('').map(function (c) { return MORSE[c]; }).join(' ');
+    }).join(' / ');
+  }
+
+  function level9(cmd, arg) {
+    if (cmd === 'funk' || cmd === 'signal') { print(morseText(), 'cipher'); return true; }
+    if (cmd === 'tabelle') {
+      var letters = Object.keys(MORSE), row = [];
+      letters.forEach(function (l, i) {
+        row.push(l + ' ' + MORSE[l] + new Array(6 - MORSE[l].length).join(' '));
+        if (row.length === 3 || i === letters.length - 1) { print(row.join(' '), 'logline'); row = []; }
+      });
+      return true;
+    }
+    if (cmd === 'decode') {
+      var code = arg.replace(/[\u00b7\u2022]/g, '.').replace(/[\u2013\u2014]/g, '-');
+      if (!/^[.\-\/ ]+$/.test(code)) { print('Benutzung: decode <morse>   (Punkte, Striche, Leerzeichen, "/")', 'warn'); return true; }
+      var rev = {};
+      Object.keys(MORSE).forEach(function (l) { rev[MORSE[l]] = l; });
+      var out2 = code.trim().split(/\s*\/\s*/).map(function (w) {
+        return w.split(/\s+/).map(function (c) { return rev.hasOwnProperty(c) ? rev[c] : '?'; }).join('');
+      }).join(' ');
+      print('Ergebnis: ' + out2, 'info');
+      return true;
+    }
+    if (cmd === 'wort' || cmd === 'code') {
+      if (!arg) { print('Benutzung: wort <wort>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L9_ANSWER) { solve(9); } else { print('Das ist nicht der Treffpunkt.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level10(cmd, arg) {
+    if (fileCmd(L10_FILES, cmd, arg)) { return true; }
+    if (cmd === 'botschaft' || cmd === 'code') {
+      if (!arg) { print('Benutzung: botschaft <wort>', 'warn'); return true; }
+      if (norm(arg).toUpperCase().trim() === L10_ANSWER) { solve(10); } else { print('In den Mails steckt eine andere Botschaft.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function level11(cmd, arg) {
+    if (cmd === 'aussagen') { printAll(L11_STATEMENTS); return true; }
+    if (cmd === 'regel') {
+      printAll(['Genau eine Person ist der Täter.', 'Genau eine der vier Aussagen ist wahr, die anderen drei sind falsch.']);
+      return true;
+    }
+    if (cmd === 'anklagen' || cmd === 'taeter') {
+      var name = norm(arg).trim();
+      if (!name) { print('Benutzung: anklagen <name>', 'warn'); return true; }
+      if (L11_SUSPECTS.indexOf(name) === -1) { print('Diese Person wurde nicht befragt.', 'err'); return true; }
+      if (name === L11_ANSWER) { print('Ben gesteht. Die Logik hat ihn überführt.', 'info'); solve(11); }
+      else { print('Das passt nicht zu den Aussagen. Zähle nach, wie viele dann wahr wären.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
+  function fsLookup(path) {
+    var parts = path.charAt(0) === '/' ? [] : fsCwd.slice();
+    path.split('/').forEach(function (p) {
+      if (!p || p === '.') { return; }
+      if (p === '..') { parts.pop(); } else { parts.push(p); }
+    });
+    var node = L12_FS;
+    for (var i = 0; i < parts.length; i++) {
+      if (node.t !== 'd' || !Object.prototype.hasOwnProperty.call(node.c, parts[i])) { return null; }
+      node = node.c[parts[i]];
+    }
+    return { node: node, parts: parts };
+  }
+
+  function level12(cmd, arg) {
+    if (cmd === 'pwd') { print('/' + fsCwd.join('/'), 'info'); return true; }
+    if (cmd === 'ls' || cmd === 'dateien') {
+      var words = arg.split(/\s+/).filter(Boolean);
+      var all = words.indexOf('-a') !== -1;
+      var target = words.filter(function (w) { return w !== '-a'; })[0] || '.';
+      var r = fsLookup(target);
+      if (!r) { print('ls: ' + target + ': nicht gefunden', 'err'); return true; }
+      if (r.node.t === 'f') { print(target); return true; }
+      var names = Object.keys(r.node.c).filter(function (n) { return all || n.charAt(0) !== '.'; }).sort();
+      print(names.length ? names.map(function (n) { return r.node.c[n].t === 'd' ? n + '/' : n; }).join('  ') : '(leer)');
+      return true;
+    }
+    if (cmd === 'cd') {
+      var d = fsLookup(arg.trim() || '/home/ghost');
+      if (!d) { print('cd: ' + arg + ': nicht gefunden', 'err'); }
+      else if (d.node.t !== 'd') { print('cd: ' + arg + ': ist kein Ordner', 'err'); }
+      else { fsCwd = d.parts; }
+      return true;
+    }
+    if (cmd === 'cat' || cmd === 'lies') {
+      if (!arg.trim()) { print('Benutzung: cat <datei>', 'warn'); return true; }
+      var f = fsLookup(arg.trim());
+      if (!f) { print('cat: ' + arg + ': nicht gefunden', 'err'); }
+      else if (f.node.t === 'd') { print('cat: ' + arg + ': ist ein Ordner', 'err'); }
+      else { printAll(f.node.l); }
+      return true;
+    }
+    if (cmd === 'login') {
+      if (!arg) { print('Benutzung: login <passwort>', 'warn'); return true; }
+      if (arg.trim().toUpperCase() === L12_ANSWER) { solve(12); } else { print('Zugriff verweigert.', 'err'); }
+      return true;
+    }
+    return false;
+  }
+
   var failCount = { l1: 0 };
 
   /* ---------- Befehlsverarbeitung ---------- */
@@ -889,6 +1186,7 @@ form { display: flex; align-items: center; gap: 8px; }
         else if (state.level === 5) { handled = level5(cmd, arg); }
         else if (state.level === 6) { handled = level6(cmd, arg); }
         else if (state.level === 7) { handled = level7(cmd, arg); }
+        else if (EXTRA[state.level]) { handled = EXTRA[state.level].run(cmd, arg); }
         if (!handled) { print('Unbekannter Befehl: ' + m[1] + '. Tippe "hilfe".', 'err'); }
     }
     refresh();
