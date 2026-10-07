@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst siebzehn Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst fünfzig Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -33,12 +33,19 @@ Du bist „Ghost“ und löst siebzehn Missionen. Gib Befehle ein oder tippe die
 | 14 – Der Lizenzschlüssel | Finde die geheime Regel hinter gültigen Schlüsseln und wähle den richtigen. |
 | 15 – Der Serverraum | Mini-Textadventure: Keycard und Code finden, Tür öffnen. |
 | 16 – Die Zwiebel | Drei Schichten Verschleierung (Base64, ROT13, rückwärts) abtragen. |
-| 17 – Der Tresorcode | Finale: Mastermind mit zufälligem 4-stelligem Code. |
+| 17 – Der Tresorcode | Mastermind mit zufälligem 4-stelligem Code. |
+| 18–28 | Chiffren-Werkstatt: Atbash, Polybius-Gitter, Zahlencode, Buchstabieralphabet, URL-Kodierung, Leetspeak, Zaunschiene, verrutschte Tastatur, XOR, Mehrfachschichten, ASCII. Die Werkzeuge wirken nacheinander auf den aktuellen Text. |
+| 29–31 | Logik: zwei weitere Alibi-Rätsel und ein Zahlenschloss mit Hinweisen. |
+| 32–35 | Quiz und Zahlen: Zahlenfolgen, Netzwerk-Quiz, Krypto-Quiz, Zahlenraten (binäre Suche). |
+| 36–45 | Knobeln: Lichter aus (3x3 und 4x4), zwei Sudokus, zwei Labyrinthe (eins im Dunkeln), Türme von Hanoi (3 und 4 Scheiben), Streichhölzer gegen den Computer, Wort-Ratespiel. |
+| 46–49 | Praxis: Passwort per Recherche, Firewall-Regeln prüfen, Backup-Archiv im Dateisystem, Textadventure im Gebäude. |
+| 50 – Die große Zwiebel | Finale: vier Schichten, du wählst Werkzeuge und Reihenfolge selbst. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
 - `hilfe` – Befehlsübersicht
 - `level <n>` – Mission starten (jedes Level schaltet das nächste frei)
+- `menu alle` – alle 50 Level anzeigen (`menu` zeigt nur die nächsten)
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
 - `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)
