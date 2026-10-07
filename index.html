@@ -438,7 +438,7 @@ form { display: flex; align-items: center; gap: 8px; }
     ],
     4: [
       'Base64 ist keine Verschlüsselung, nur eine andere Schreibweise. Oft endet sie mit "=".',
-      'Mit "base64 <text>" kannst du Text zurückverwandeln. Kopiere den Text aus "dump" (lange auf den Text tippen, markieren, kopieren).',
+      'Mit "base64" wandelst du das Datenpaket zurück. Du kannst auch eigenen Text angeben: "base64 <text>".',
       'Im entschlüsselten Satz steht das Schlüsselwort in Großbuchstaben.'
     ],
     5: [
@@ -1855,7 +1855,7 @@ form { display: flex; align-items: center; gap: 8px; }
         { c: 'suche download' }, { c: 'taeter ', fill: true }
       ];
     } else if (state.level === 4) {
-      base = [{ c: 'dump' }, { c: 'base64 ', fill: true }, { c: 'schluessel ', fill: true }];
+      base = [{ c: 'dump' }, { c: 'base64' }, { c: 'base64 ', fill: true }, { c: 'schluessel ', fill: true }];
     } else if (state.level === 5) {
       base = [{ c: 'signal' }, { c: 'byte ', fill: true }, { c: 'bin ', fill: true }, { c: 'pin ', fill: true }];
     } else if (state.level === 6) {
@@ -1985,7 +1985,7 @@ form { display: flex; align-items: center; gap: 8px; }
     } else if (state.level === 3) {
       printAll(['', 'MISSION 3:', 'log .............. komplette Logdatei', 'suche <begriff> .. Zeilen filtern', 'taeter <ip> ...... Eindringling melden']);
     } else if (state.level === 4) {
-      printAll(['', 'MISSION 4:', 'dump ............. Datenpaket anzeigen', 'base64 <text> .... Base64 zurückverwandeln', 'schluessel <wort>  Schlüsselwort abgeben']);
+      printAll(['', 'MISSION 4:', 'dump ............. Datenpaket anzeigen', 'base64 [text] ..... Base64 zurückverwandeln (ohne Text: das Datenpaket)', 'schluessel <wort>  Schlüsselwort abgeben']);
     } else if (state.level === 5) {
       printAll(['', 'MISSION 5:', 'signal ........... Bitfolge anzeigen', 'byte <n> ......... n-tes Zeichen (8 Bit) entschlüsseln', 'bin <bits> ....... Bits in Text umwandeln', 'pin <zahl> ....... PIN abgeben']);
     } else if (state.level === 6) {
@@ -2061,7 +2061,7 @@ form { display: flex; align-items: center; gap: 8px; }
         'Im Datendepot liegt ein Datenpaket. Es sieht aus wie wirres Zeug, ist aber Base64-kodiert.',
         'Wandle es zurück und finde das Schlüsselwort.',
         '',
-        'Befehle: dump, base64 <text>, schluessel <wort>, hinweis'
+        'Befehle: dump, base64 [text], schluessel <wort>, hinweis'
       ]);
     } else if (n === 5) {
       printAll([
@@ -2218,8 +2218,7 @@ form { display: flex; align-items: center; gap: 8px; }
   function level4(cmd, arg) {
     if (cmd === 'dump') { print(base64Text(), 'cipher'); return true; }
     if (cmd === 'base64' || cmd === 'dekodiere') {
-      if (!arg) { print('Benutzung: base64 <text>', 'warn'); return true; }
-      var plain = fromBase64(arg);
+      var plain = fromBase64(arg || base64Text());
       print(plain === null ? 'Das ist kein gültiges Base64.' : 'Ergebnis: ' + plain, plain === null ? 'err' : 'info');
       return true;
     }

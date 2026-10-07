@@ -3,7 +3,7 @@
 Ein kleines Hacking-Puzzle im Terminal-Look – spielbar direkt im Browser, optimiert fürs Handy.
 Alles ist **rein fiktiv**: erfundene Server, erfundene Personen, keine echten Exploits und keine echten Zugangsdaten.
 
-> **Screenshot:** *folgt* – lege später ein Bild unter `docs/screenshot.png` ab und ersetze diese Zeile durch `![Screenshot](docs/screenshot.png)`.
+![Screenshot von Level 2: Caesar-Chiffre knacken](docs/screenshot.png)
 
 ## Spielen
 
@@ -69,6 +69,7 @@ Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine D
 
 ```
 index.html   Das komplette Spiel (HTML, CSS, JavaScript)
+docs/        Screenshot für die README
 README.md    Diese Datei
 LICENSE      MIT-Lizenz
 .gitignore   Ignorierte Dateien
