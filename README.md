@@ -41,7 +41,10 @@ Wichtige Befehle (mit `hilfe` siehst du immer alle):
 - `level <n>` – Mission starten (jedes Level schaltet das nächste frei)
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
+- `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)
 - `reset` – Spielstand löschen
+
+Die Klänge werden live im Browser erzeugt (Web Audio API), es gibt keine Audiodateien. In Level 9 kannst du das Morsesignal mit `abspielen` auch anhören.
 
 Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine Daten an einen Server gesendet.
 

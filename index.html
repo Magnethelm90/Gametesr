@@ -53,8 +53,21 @@ header {
   font-size: 13px;
 }
 .logo { font-weight: bold; letter-spacing: .08em; text-shadow: 0 0 8px rgba(56,255,122,.6); }
-.progress { color: var(--dim); white-space: nowrap; }
-.progress .done { color: var(--ok); }
+.progress { color: var(--dim); white-space: nowrap; margin-left: auto; }
+.sndbtn {
+  min-height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--faint);
+  border-radius: 6px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.sndbtn[aria-pressed="false"] { color: var(--dim); }
+.sndbtn:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
 #out {
   flex: 1;
   overflow-y: auto;
@@ -145,6 +158,7 @@ form { display: flex; align-items: center; gap: 8px; }
 <header>
   <span class="logo">GHOST//SHELL</span>
   <span class="progress" id="progress" aria-label="Fortschritt"></span>
+  <button id="snd" class="sndbtn" type="button" aria-pressed="true" aria-label="Sound ein- oder ausschalten">&#9835; AN</button>
 </header>
 <main id="out" role="log" aria-live="polite" aria-label="Terminal-Ausgabe"></main>
 <footer>
@@ -504,9 +518,9 @@ form { display: flex; align-items: center; gap: 8px; }
       run: level8
     },
     9: {
-      chips: [{ c: 'funk' }, { c: 'tabelle' }, { c: 'decode ', fill: true }, { c: 'wort ', fill: true }],
-      intro: ['Ein Leuchtturm sendet Lichtsignale: kurz (.) und lang (-).', 'Übersetze den Morsecode und finde den Treffpunkt.', '', 'Befehle: funk, tabelle, decode <morse>, wort <wort>, hinweis'],
-      help: ['funk ............. Morsesignal anzeigen', 'tabelle .......... Morsealphabet', 'decode <morse> ... Morsecode übersetzen', 'wort <wort> ...... Treffpunkt abgeben'],
+      chips: [{ c: 'funk' }, { c: 'abspielen' }, { c: 'tabelle' }, { c: 'decode ', fill: true }, { c: 'wort ', fill: true }],
+      intro: ['Ein Leuchtturm sendet Lichtsignale: kurz (.) und lang (-).', 'Übersetze den Morsecode und finde den Treffpunkt.', '', 'Befehle: funk, abspielen, tabelle, decode <morse>, wort <wort>, hinweis'],
+      help: ['funk ............. Morsesignal anzeigen', 'abspielen ........ Signal als Ton hören', 'tabelle .......... Morsealphabet', 'decode <morse> ... Morsecode übersetzen', 'wort <wort> ...... Treffpunkt abgeben'],
       run: level9
     },
     10: {
@@ -604,6 +618,90 @@ form { display: flex; align-items: center; gap: 8px; }
     try { window.localStorage.removeItem(STORE_KEY); } catch (e) { /* ignorieren */ }
   }
 
+  /* ---------- Sound (Web Audio, alles synthetisch, keine Dateien) ---------- */
+
+  var SOUND_KEY = 'ghostshell.sound';
+  var audio = { ctx: null, on: true, last: {} };
+
+  function loadSound() {
+    try { if (window.localStorage.getItem(SOUND_KEY) === '0') { audio.on = false; } } catch (e) { /* Standard: an */ }
+  }
+
+  function saveSound() {
+    try { window.localStorage.setItem(SOUND_KEY, audio.on ? '1' : '0'); } catch (e) { /* ignorieren */ }
+  }
+
+  function actx() {
+    if (!audio.on) { return null; }
+    if (!audio.ctx) {
+      var Ctor = window.AudioContext || window.webkitAudioContext;
+      if (!Ctor) { return null; }
+      try { audio.ctx = new Ctor(); } catch (e) { return null; }
+    }
+    if (audio.ctx.state === 'suspended') { audio.ctx.resume(); }
+    return audio.ctx;
+  }
+
+  function tone(freq, dur, type, vol, delay) {
+    var c = actx();
+    if (!c) { return; }
+    var t = c.currentTime + (delay || 0);
+    var osc = c.createOscillator();
+    var gain = c.createGain();
+    osc.type = type || 'square';
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol || 0.05, t + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(gain);
+    gain.connect(c.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.03);
+  }
+
+  function throttled(name, ms) {
+    var now = Date.now();
+    if (audio.last[name] && now - audio.last[name] < ms) { return false; }
+    audio.last[name] = now;
+    return true;
+  }
+
+  var sfx = {
+    key: function () { if (throttled('key', 40)) { tone(1500 + Math.random() * 300, 0.025, 'square', 0.02); } },
+    enter: function () { tone(520, 0.05, 'square', 0.035); tone(780, 0.05, 'square', 0.03, 0.05); },
+    err: function () { if (throttled('err', 250)) { tone(170, 0.14, 'sawtooth', 0.05); tone(120, 0.2, 'sawtooth', 0.05, 0.13); } },
+    level: function () { tone(330, 0.08, 'triangle', 0.05); tone(495, 0.1, 'triangle', 0.05, 0.08); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.16, 'square', 0.045, i * 0.09); }); },
+    fin: function () {
+      [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, 0.22, 'square', 0.05, i * 0.11); });
+      tone(262, 0.9, 'triangle', 0.06, 0);
+    }
+  };
+
+  function updateSoundButton() {
+    var b = document.getElementById('snd');
+    b.setAttribute('aria-pressed', audio.on ? 'true' : 'false');
+    b.textContent = '\u266B ' + (audio.on ? 'AN' : 'AUS');
+  }
+
+  function setSound(on) {
+    audio.on = on;
+    saveSound();
+    updateSoundButton();
+    if (on) { sfx.enter(); }
+  }
+
+  function playMorse(code) {
+    if (!audio.on) { print('Der Sound ist aus. Schalte ihn oben rechts ein oder tippe "sound an".', 'warn'); return; }
+    var unit = 0.09, t = 0;
+    code.split('').forEach(function (ch) {
+      if (ch === '.') { tone(650, unit * 0.9, 'sine', 0.12, t); t += unit * 2; }
+      else if (ch === '-') { tone(650, unit * 2.9, 'sine', 0.12, t); t += unit * 4; }
+      else if (ch === ' ' || ch === '/') { t += unit * 2; }
+    });
+    print('Signal wird abgespielt …', 'dim');
+  }
+
   /* ---------- Ausgabe ---------- */
 
   var out = document.getElementById('out');
@@ -622,6 +720,14 @@ form { display: flex; align-items: center; gap: 8px; }
     if (!pumping) { pumping = true; step(); }
   }
 
+  function soundFor(item) {
+    if (item.cls === 'cmd') { sfx.enter(); }
+    else if (item.cls === 'err') { sfx.err(); }
+    else if (item.cls === 'ok' && item.text.indexOf('>>>') === 0) { sfx.win(); }
+    else if (item.cls === 'ok' && item.text.indexOf('***') === 0) { sfx.fin(); }
+    else if (item.cls === 'head' && item.text.indexOf('=== MISSION ') === 0) { sfx.level(); }
+  }
+
   function step() {
     var item = queue.shift();
     if (!item) { pumping = false; return; }
@@ -630,6 +736,7 @@ form { display: flex; align-items: center; gap: 8px; }
     div.textContent = item.text;
     out.appendChild(div);
     out.scrollTop = out.scrollHeight;
+    soundFor(item);
     if (LINE_DELAY) { setTimeout(step, LINE_DELAY); } else { step(); }
   }
 
@@ -645,11 +752,7 @@ form { display: flex; align-items: center; gap: 8px; }
   function renderStatus() {
     var host = hostName();
     promptEl.textContent = host.indexOf(':') === -1 ? host + ':~$' : host + '$';
-    var dots = state.solved.map(function (s, i) {
-      return s ? '<span class="done">[' + (i + 1) + ']</span>' : '[' + (i + 1) + ']';
-    });
-    // nur feste, selbst erzeugte Zeichen: kein Nutzertext im HTML
-    progressEl.innerHTML = dots.join(' ');
+    progressEl.textContent = state.solved.filter(Boolean).length + '/' + LEVEL_COUNT + ' gelöst';
   }
 
   function chipList() {
@@ -793,6 +896,7 @@ form { display: flex; align-items: center; gap: 8px; }
       'level <n> ........ Mission starten (1-' + LEVEL_COUNT + ')',
       'hinweis .......... Tipp zur aktuellen Mission',
       'status ........... Fortschritt anzeigen',
+      'sound an|aus ..... Ton ein- oder ausschalten',
       'clear ............ Bildschirm leeren',
       'reset ............ Spielstand löschen'
     ]);
@@ -1151,6 +1255,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   function level9(cmd, arg) {
     if (cmd === 'funk' || cmd === 'signal') { print(morseText(), 'cipher'); return true; }
+    if (cmd === 'abspielen' || cmd === 'hoeren') { playMorse(morseText()); return true; }
     if (cmd === 'tabelle') {
       var letters = Object.keys(MORSE), row = [];
       letters.forEach(function (l, i) {
@@ -1459,6 +1564,11 @@ form { display: flex; align-items: center; gap: 8px; }
       case 'level': case 'lvl': startLevel(parseInt(arg, 10)); break;
       case 'hinweis': case 'tipp': case 'hint': showHint(); break;
       case 'status': showStatus(); break;
+      case 'sound':
+        if (norm(arg) === 'an' || norm(arg) === 'ein') { setSound(true); print('Sound an.', 'dim'); }
+        else if (norm(arg) === 'aus') { setSound(false); print('Sound aus.', 'dim'); }
+        else { setSound(!audio.on); print(audio.on ? 'Sound an.' : 'Sound aus.', 'dim'); }
+        break;
       case 'clear': case 'cls': case 'leeren':
         out.textContent = ''; queue.length = 0; break;
       case 'reset':
@@ -1504,6 +1614,7 @@ form { display: flex; align-items: center; gap: 8px; }
   });
 
   input.addEventListener('keydown', function (e) {
+    if (e.key.length === 1 || e.key === 'Backspace') { sfx.key(); }
     if (e.key === 'ArrowUp' && history.length) {
       e.preventDefault();
       histPos = Math.max(0, histPos - 1);
@@ -1532,6 +1643,9 @@ form { display: flex; align-items: center; gap: 8px; }
     showMenu();
   }
 
+  document.getElementById('snd').addEventListener('click', function () { setSound(!audio.on); });
+  loadSound();
+  updateSoundButton();
   refresh();
   boot();
 })();
