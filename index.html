@@ -1509,7 +1509,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   reg(34, quizLevel({
     n: 34, title: 'Das Krypto-Quiz', host: 'ghost@krypto-quiz',
-    story: ['Die letzte Hürde vor dem Hochsicherheitsbereich: ein Quiz über Verschlüsselung und Sicherheit.'],
+    story: ['Die nächste Hürde vor dem Hochsicherheitsbereich: ein Quiz über Verschlüsselung und Sicherheit.'],
     questions: [
       { q: 'Wie oft musst du ROT13 anwenden, um wieder den Originaltext zu erhalten?', a: ['2', 'zweimal', 'zwei'] },
       { q: 'Nutzen Sender und Empfänger denselben Schlüssel: symmetrisch oder asymmetrisch?', a: ['symmetrisch'] },
@@ -2546,7 +2546,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   reg(80, decodeLevel({
     n: 80, title: 'Die Meisterprüfung', host: 'ghost@meisterpruefung',
-    story: ['Die allerletzte Nachricht. Fünf Schichten, zwölf Werkzeuge, und niemand sagt dir die Reihenfolge.', 'Beweise, dass du ein Meister der Chiffren bist.'],
+    story: ['Eine Nachricht für echte Meister. Fünf Schichten, zwölf Werkzeuge, und niemand sagt dir die Reihenfolge.', 'Beweise, dass du ein Meister der Chiffren bist.'],
     plain: 'GRATULATION DU HAST DAS PASSWORT LAUTET MEISTERHACKER', layers: [{ t: 'umkehren' }, { t: 'atbash' }, { t: 'shift', a: '7' }, { t: 'hex' }, { t: 'base64' }],
     tools: ['base64', 'hex', 'shift', 'atbash', 'umkehren', 'rot13', 'key', 'xor', 'bin', 'zahlen', 'polybius', 'url'], answer: 'MEISTERHACKER',
     hints: ['Die äußerste Schicht sieht aus wie Base64. Danach folgen Hex-Zahlen.', 'Nach Hex bleibt Buchstabensalat. Eine Caesar-Verschiebung ist dabei, probiere shift mit verschiedenen Zahlen.', 'Reihenfolge: base64, hex, shift 7, atbash, umkehren.']

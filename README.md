@@ -55,7 +55,7 @@ Du bist „Ghost“ und löst 80 Missionen. Gib Befehle ein oder tippe die Knöp
 | 70–72 | Logik: viertes Alibi-Rätsel, zweites Zahlenschloss, drittes Sudoku. |
 | 73–78 | Knobeln II: Lichter aus 5x5, riesiges dunkles Labyrinth, Türme von Hanoi mit 5 Scheiben, Nim mit drei Haufen gegen den Computer, zweites Bilderrätsel, Wort-Ratespiel mit 6 Buchstaben. |
 | 79 – Operation Vorfall | Mini-Kampagne, diesmal als Verteidiger: Alarm, Spurensuche im Log, Konto finden, richtig melden. |
-| 80 – Die Meisterprüfung | Finale: fünf Schichten, zwölf Werkzeuge, die Reihenfolge findest du selbst heraus. |
+| 80 – Die Meisterprüfung | Fünf Schichten, zwölf Werkzeuge, die Reihenfolge findest du selbst heraus. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
