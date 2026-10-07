@@ -432,9 +432,9 @@ form { display: flex; align-items: center; gap: 8px; }
       'Gesucht: der Hund (nicht die Katze!) und das Geburtsjahr. Alles klein, ohne Leerzeichen.'
     ],
     2: [
-      'Eine Caesar-Chiffre verschiebt jeden Buchstaben um die gleiche Anzahl im Alphabet.',
-      'Probiere mit "shift <zahl>" verschiedene Verschiebungen. Tipp: "analyse" zeigt die häufigsten Buchstaben. Im Deutschen ist E am häufigsten.',
-      'Die Verschiebung liegt zwischen 1 und 25. Im Klartext steht ein Codewort nach "ZUGANGSCODE LAUTET".'
+      'Eine Caesar-Chiffre verschiebt jeden Buchstaben um die gleiche Anzahl im Alphabet. Du musst nur diese Zahl finden.',
+      'Mit "alle" siehst du auf einen Blick alle 25 Möglichkeiten. Genau eine Zeile liest sich wie ein deutscher Satz.',
+      'Im Satz steht das Codewort nach "ZUGANGSCODE LAUTET". Gib es mit "code <wort>" ein.'
     ],
     4: [
       'Base64 ist keine Verschlüsselung, nur eine andere Schreibweise. Oft endet sie mit "=".',
@@ -2744,7 +2744,7 @@ form { display: flex; align-items: center; gap: 8px; }
       ];
     } else if (state.level === 2) {
       base = [
-        { c: 'nachricht' }, { c: 'analyse' }, { c: 'shift ', fill: true }, { c: 'code ', fill: true }
+        { c: 'nachricht' }, { c: 'alle' }, { c: 'shift ', fill: true }, { c: 'code ', fill: true }, { c: 'analyse' }
       ];
     } else if (state.level === 3) {
       base = [
@@ -2878,7 +2878,7 @@ form { display: flex; align-items: center; gap: 8px; }
     if (state.level === 1) {
       printAll(['', 'MISSION 1:', 'dateien ........... Dateien auflisten', 'lies <datei> ..... Datei lesen', 'login <passwort> . Einloggen']);
     } else if (state.level === 2) {
-      printAll(['', 'MISSION 2:', 'nachricht ........ abgefangenen Funkspruch zeigen', 'analyse .......... Buchstaben zählen', 'shift <1-25> ..... Buchstaben zurückschieben', 'code <wort> ...... Codewort abgeben']);
+      printAll(['', 'MISSION 2:', 'nachricht ........ abgefangenen Funkspruch zeigen', 'alle ............. alle 25 Verschiebungen auf einmal', 'analyse .......... Buchstaben zählen', 'shift <1-25> ..... Buchstaben zurückschieben', 'code <wort> ...... Codewort abgeben']);
     } else if (state.level === 3) {
       printAll(['', 'MISSION 3:', 'log .............. komplette Logdatei', 'suche <begriff> .. Zeilen filtern', 'taeter <ip> ...... Eindringling melden']);
     } else if (state.level === 4) {
@@ -2942,7 +2942,7 @@ form { display: flex; align-items: center; gap: 8px; }
         'Du hast einen verschlüsselten Funkspruch abgefangen.',
         'Er wurde mit einer Caesar-Chiffre verschlüsselt. Finde die Verschiebung und das Codewort.',
         '',
-        'Befehle: nachricht, analyse, shift <1-25>, code <wort>, hinweis'
+        'Tipp: Mit "alle" siehst du alle möglichen Entschlüsselungen auf einmal. Eine davon ergibt einen deutschen Satz.', 'Befehle: nachricht, alle, shift <1-25>, analyse, code <wort>, hinweis'
       ]);
       print('');
       print(cipherText(), 'cipher');
@@ -3054,11 +3054,16 @@ form { display: flex; align-items: center; gap: 8px; }
       print(cipherText(), 'cipher');
       return true;
     }
+    if (cmd === 'alle') {
+      for (var sh = 1; sh <= 25; sh++) { print('shift ' + (sh < 10 ? ' ' : '') + sh + ': ' + caesar(cipherText(), -sh), 'logline'); }
+      print('Welche Zeile liest sich wie ein deutscher Satz? Dort steht das Codewort.', 'dim');
+      return true;
+    }
     if (cmd === 'analyse') {
       var counts = {};
       cipherText().replace(/[A-Z]/g, function (c) { counts[c] = (counts[c] || 0) + 1; });
       var top = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || (a < b ? -1 : 1); }).slice(0, 5);
-      print('Häufigste Buchstaben im Funkspruch:', 'dim');
+      print('Häufigste Buchstaben im Funkspruch (bei kurzen Texten kann das täuschen):', 'dim');
       top.forEach(function (c) { print('  ' + c + ' : ' + counts[c] + 'x'); });
       return true;
     }
