@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#050805">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="data:,">
 <meta name="description" content="GHOST//SHELL – ein kleines Hacking-Puzzle im Terminal-Look. Rein fiktiv, spielbar im Browser.">
 <title>GHOST//SHELL</title>
 <style>
@@ -166,7 +169,7 @@ form { display: flex; align-items: center; gap: 8px; }
   <form id="form" autocomplete="off">
     <span id="prompt" aria-hidden="true">$</span>
     <input id="in" type="text" inputmode="text" enterkeyhint="send"
-           autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"
+           autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" maxlength="1000"
            aria-label="Befehl eingeben" placeholder="Befehl eingeben …">
     <button id="go" type="submit" aria-label="Senden">&#9166;</button>
   </form>
@@ -1332,7 +1335,7 @@ form { display: flex; align-items: center; gap: 8px; }
     if (cmd === 'umsehen') { a2Describe(); return true; }
     if (cmd === 'inventar') { print(adv2.inv.length ? 'Du trägst: ' + adv2.inv.join(', ') : 'Du trägst nichts.', 'info'); return true; }
     if (cmd === 'gehe' || cmd === 'geh') {
-      var dir = DIRS[thing];
+      var dir = dirOf(thing);
       if (!dir) { print('Benutzung: gehe <nord|ost|sued|west>', 'warn'); return true; }
       var room = A2_ROOMS[adv2.room];
       if (!room.exits[dir]) { print('Dort ist eine Wand.', 'err'); return true; }
@@ -1778,6 +1781,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var LINE_DELAY = reduceMotion ? 0 : 12;
+  var MAX_LINES = 1500;
   var queue = [];
   var pumping = false;
 
@@ -1801,6 +1805,7 @@ form { display: flex; align-items: center; gap: 8px; }
     if (item.cls) { div.className = item.cls; }
     div.textContent = item.text;
     out.appendChild(div);
+    while (out.childNodes.length > MAX_LINES) { out.removeChild(out.firstChild); }
     out.scrollTop = out.scrollHeight;
     soundFor(item);
     if (LINE_DELAY) { setTimeout(step, LINE_DELAY); } else { step(); }
@@ -2502,6 +2507,7 @@ form { display: flex; align-items: center; gap: 8px; }
   }
 
   var DIRS = { n: 'nord', nord: 'nord', o: 'ost', ost: 'ost', s: 'sued', sued: 'sued', w: 'west', west: 'west' };
+  function dirOf(word) { return Object.prototype.hasOwnProperty.call(DIRS, word) ? DIRS[word] : null; }
 
   function describeRoom() {
     var r = L15_ROOMS[adv.room];
@@ -2516,7 +2522,7 @@ form { display: flex; align-items: center; gap: 8px; }
     if (cmd === 'umsehen') { describeRoom(); return true; }
     if (cmd === 'inventar') { print(adv.inv.length ? 'Du trägst: ' + adv.inv.join(', ') : 'Du trägst nichts.', 'info'); return true; }
     if (cmd === 'gehe' || cmd === 'geh' || cmd === 'go') {
-      var dir = DIRS[thing];
+      var dir = dirOf(thing);
       if (!dir) { print('Benutzung: gehe <nord|ost|sued|west>', 'warn'); return true; }
       var room = L15_ROOMS[adv.room];
       if (adv.room === 'flur' && dir === 'sued') { print('Die Stahltür ist verschlossen. Du brauchst eine Keycard und den Code.', 'err'); return true; }

@@ -57,6 +57,14 @@ Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine D
 
 **Spoiler-Hinweis:** Das Spiel ist eine einzelne Datei. Die Lösungen stehen im Quelltext – wer selbst rätseln will, schaut nicht hinein.
 
+## Sicherheit
+
+- Das Spiel läuft komplett im Browser und sendet nichts an einen Server. Eine eingebaute Content Security Policy blockiert Netzwerkzugriffe, Fremd-Skripte und Formular-Versand.
+- Eingaben werden nur als Text angezeigt (`textContent`), nie als HTML.
+- Der gespeicherte Spielstand (`localStorage`) wird beim Laden geprüft. Defekte oder manipulierte Daten werden ignoriert.
+- Alle Namen, Passwörter und Zugangsdaten im Spiel sind frei erfunden.
+- Sicherheitslücke gefunden? Bitte als [Issue](https://github.com/Magnethelm90/Gametesr/issues) melden.
+
 ## Projektstruktur
 
 ```
