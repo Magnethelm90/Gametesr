@@ -13,7 +13,7 @@ Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt kei
 
 ## So spielst du
 
-Du bist „Ghost“ und löst 55 Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
+Du bist „Ghost“ und löst 60 Missionen. Gib Befehle ein oder tippe die Knöpfe unten am Bildschirm an.
 
 | Level | Aufgabe |
 |-------|---------|
@@ -44,13 +44,18 @@ Du bist „Ghost“ und löst 55 Missionen. Gib Befehle ein oder tippe die Knöp
 | 52 – Der Anruf | Gesprächsbaum: Du bist der Verteidiger und erkennst einen Social-Engineering-Anruf. |
 | 53 – Der Aufzug | Transport-Rätsel im Rechenzentrum: Virus, Datei und Backup sicher auf die andere Seite bringen. |
 | 54 – Der Schaltkreis | Logik-Gatter (UND, ODER, NICHT, XOR): Stelle die Schalter so, dass die richtigen Lampen leuchten. |
-| 55 – Operation Dämmerung | Finale: Mini-Kampagne in fünf Kapiteln mit zwei Wegen, Rätseln und einer Gewissensentscheidung. |
+| 55 – Operation Dämmerung | Mini-Kampagne in fünf Kapiteln mit zwei Wegen, Rätseln und einer Gewissensentscheidung. |
+| 56 – Die Datenbank | Abfragen mit `wo`, `sortiere` und `zeige`: Finde den Verdächtigen im Zugriffsprotokoll. |
+| 57 – Der Schlüsselaustausch | Diffie-Hellman mit kleinen Zahlen: Warum es mit großen Zahlen sicher ist, mit winzigen aber nicht. |
+| 58 – Das Schiebepuzzle | Acht Kacheln und eine Lücke, in die richtige Reihenfolge bringen. |
+| 59 – Das Minenfeld | Logik-Minensucher auf 6x6 Feldern, ganz ohne Raten lösbar. |
+| 60 – Das Bilderrätsel | Finale: Nonogramm. Die Zahlen am Rand verraten das Bild. |
 
 Wichtige Befehle (mit `hilfe` siehst du immer alle):
 
 - `hilfe` – Befehlsübersicht
 - `level <n>` – Mission starten (jedes Level schaltet das nächste frei)
-- `menu alle` – alle 55 Level anzeigen (`menu` zeigt nur die nächsten)
+- `menu alle` – alle 60 Level anzeigen (`menu` zeigt nur die nächsten)
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
 - `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)

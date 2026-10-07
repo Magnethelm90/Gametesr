@@ -182,7 +182,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Spieldaten (komplett fiktiv) ---------- */
 
   var STORE_KEY = 'ghostshell.v1';
-  var LEVEL_COUNT = 55;
+  var LEVEL_COUNT = 60;
   var TITLES = ['', 'Das Passwort', 'Die Chiffre', 'Der Eindringling', 'Das Datendepot', 'Das Signal', 'Der Netzscan', 'Der Tresor', 'Das Funkfeuer', 'Das Morsesignal', 'Die Geheimmail', 'Das Alibi', 'Das Mainframe', 'Die Kurznachricht', 'Der Lizenzschlüssel', 'Der Serverraum', 'Die Zwiebel', 'Der Tresorcode'];
 
   // Level 1
@@ -1925,7 +1925,7 @@ form { display: flex; align-items: center; gap: 8px; }
       return c.concat([{ c: 'text' }, { c: 'tipp' }, { c: 'neu' }]);
     },
     help: ['1 2 3 ............. Antwort wählen (oder "wahl <n>")', 'antwort <text> ... Aufgabe beantworten', 'shift / rot13 .... Werkzeuge (nur in manchen Kapiteln)', 'text ............. aktuelles Kapitel anzeigen', 'tipp ............. Hinweis zum Kapitel', 'neu .............. Kampagne von vorn'],
-    intro: ['DAS GROSSE FINALE: OPERATION DÄMMERUNG', 'Du bist Ghost, Mitglied einer "roten Gruppe". Mit schriftlichem Auftrag testest du die Sicherheit der (erfundenen) Nordlicht GmbH.', 'Deine Kontaktperson Marta begleitet dich per Funk. Fünf Kapitel, zwei mögliche Wege.', '', 'Befehle: 1, 2, ... (oder wahl <n>), antwort <text>, text, tipp, neu'],
+    intro: ['OPERATION DÄMMERUNG', 'Du bist Ghost, Mitglied einer "roten Gruppe". Mit schriftlichem Auftrag testest du die Sicherheit der (erfundenen) Nordlicht GmbH.', 'Deine Kontaktperson Marta begleitet dich per Funk. Fünf Kapitel, zwei mögliche Wege.', '', 'Befehle: 1, 2, ... (oder wahl <n>), antwort <text>, text, tipp, neu'],
     start: function () { camp = { stage: 'k1', path: '' }; },
     after: campShow,
     run: function (cmd, arg) {
@@ -1959,6 +1959,254 @@ form { display: flex; align-items: center; gap: 8px; }
         if (!s.answer(arg)) { print('Das stimmt nicht. Versuche es noch einmal (oder "tipp").', 'err'); return true; }
         print(s.ok, 'info');
         if (s.next) { camp.stage = s.next; campShow(); } else { solve(55); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* ---------- Level 56-60 ---------- */
+
+  /* 56: Mini-Datenbank mit Abfragen (zeige, wo, sortiere) */
+
+  var DB_COLS = ['id', 'nutzer', 'ort', 'zeit', 'aktion', 'status', 'kb'];
+  var DB_ROWS = [
+    [1, 'anna', 'intern', '08:15', 'login', 'ok', 0], [2, 'ben', 'intern', '09:02', 'export', 'ok', 120], [3, 'carla', 'extern', '02:47', 'login', 'fehler', 0],
+    [4, 'carla', 'extern', '02:49', 'login', 'ok', 0], [5, 'carla', 'extern', '02:55', 'export', 'ok', 48210], [6, 'dennis', 'extern', '14:20', 'export', 'ok', 300],
+    [7, 'emil', 'intern', '03:10', 'export', 'ok', 90], [8, 'fiona', 'extern', '03:30', 'export', 'fehler', 500], [9, 'gustav', 'extern', '23:50', 'export', 'ok', 700],
+    [10, 'hanna', 'intern', '10:00', 'login', 'ok', 0], [11, 'ben', 'extern', '05:59', 'login', 'ok', 0], [12, 'anna', 'extern', '04:05', 'login', 'ok', 0],
+    [13, 'dennis', 'intern', '16:40', 'export', 'ok', 60], [14, 'emil', 'extern', '07:30', 'export', 'ok', 220], [15, 'fiona', 'intern', '12:12', 'login', 'ok', 0],
+    [16, 'gustav', 'intern', '01:20', 'login', 'fehler', 0]
+  ];
+  var L56_ANSWER = 'carla';
+  var dbq = { filters: [], sort: null, desc: false };
+
+  function dbRows() {
+    var rows = DB_ROWS.filter(function (r) {
+      return dbq.filters.every(function (f) {
+        var i = DB_COLS.indexOf(f.col), v = r[i], t = typeof v === 'number' ? parseInt(f.val, 10) : f.val;
+        return f.op === '=' ? v === t : (f.op === '<' ? v < t : v > t);
+      });
+    });
+    if (dbq.sort) {
+      var si = DB_COLS.indexOf(dbq.sort);
+      rows = rows.slice().sort(function (a, b) { return (a[si] < b[si] ? -1 : a[si] > b[si] ? 1 : 0) * (dbq.desc ? -1 : 1); });
+    }
+    return rows;
+  }
+  function dbShow() {
+    var rows = dbRows();
+    print(DB_COLS.map(function (c) { return (c + '        ').slice(0, c === 'kb' ? 6 : 7); }).join(' '), 'dim');
+    rows.forEach(function (r) { print(r.map(function (v, i) { return (String(v) + '        ').slice(0, DB_COLS[i] === 'kb' ? 6 : 7); }).join(' '), 'logline'); });
+    print(rows.length + ' Zeile(n)' + (dbq.filters.length ? ' (Filter: ' + dbq.filters.map(function (f) { return f.col + f.op + f.val; }).join(', ') + ')' : ''), 'dim');
+  }
+
+  reg(56, {
+    title: 'Die Datenbank', host: 'ghost@datenbank',
+    hints: ['Mit "wo" grenzt du die Tabelle Schritt für Schritt ein. Mehrere Filter gelten zusammen.', 'Gesucht: ort = extern, aktion = export, status = ok und zeit unter 06:00. Beispiel: wo zeit<06:00', 'Nach allen vier Filtern bleibt genau eine Zeile übrig. Der Nutzer dort ist die Antwort.'],
+    chips: [{ c: 'zeige' }, { c: 'wo ', fill: true }, { c: 'sortiere ', fill: true }, { c: 'neu' }, { c: 'antwort ', fill: true }],
+    help: ['zeige ............. Tabelle (mit Filtern) anzeigen', 'wo <spalte><op><wert>  Filter, z. B. wo ort=extern oder wo kb>1000 (=, <, >)', 'sortiere <spalte> [ab]  Sortierung', 'neu .............. Filter und Sortierung löschen', 'antwort <nutzer> . Verdächtigen melden'],
+    intro: ['Das Zugriffsprotokoll liegt als kleine Tabelle vor. Spalten: ' + DB_COLS.join(', ') + '.', 'Gesucht: Wer hat nachts (vor 06:00 Uhr) von außerhalb (ort = extern) Daten exportiert, und der Export war erfolgreich (status = ok)?', '', 'Befehle: zeige, wo <spalte><op><wert>, sortiere <spalte> [ab], neu, antwort <nutzer>, hinweis'],
+    start: function () { dbq = { filters: [], sort: null, desc: false }; },
+    after: function () { print(''); dbShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'zeige') { dbShow(); return true; }
+      if (cmd === 'neu') { dbq = { filters: [], sort: null, desc: false }; dbShow(); return true; }
+      if (cmd === 'wo') {
+        var m = norm(arg).match(/^([a-z]+)\s*(=|<|>)\s*([a-z0-9:]+)$/);
+        if (!m || DB_COLS.indexOf(m[1]) === -1) { print('Benutzung: wo <spalte><op><wert>   z. B. wo ort=extern   (Spalten: ' + DB_COLS.join(', ') + ')', 'warn'); return true; }
+        dbq.filters.push({ col: m[1], op: m[2], val: m[3] });
+        dbShow();
+        return true;
+      }
+      if (cmd === 'sortiere') {
+        var w = norm(arg).split(/\s+/).filter(Boolean);
+        if (!w.length || DB_COLS.indexOf(w[0]) === -1) { print('Benutzung: sortiere <spalte> [ab]', 'warn'); return true; }
+        dbq.sort = w[0]; dbq.desc = w[1] === 'ab';
+        dbShow();
+        return true;
+      }
+      if (cmd === 'antwort') {
+        if (!arg) { print('Benutzung: antwort <nutzer>', 'warn'); return true; }
+        if (norm(arg).trim() === L56_ANSWER) { solve(56); } else { print('Das ist nicht der Gesuchte. Grenze mit "wo" weiter ein.', 'err'); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 57: Schluesselaustausch (Diffie-Hellman mit kleinen Zahlen) */
+
+  var DH = { p: 23, g: 5, A: 8, B: 19, s: 2 };
+  function modPow(b, e, m) {
+    var r = 1; b = b % m;
+    while (e > 0) { if (e & 1) { r = (r * b) % m; } b = (b * b) % m; e = Math.floor(e / 2); }
+    return r;
+  }
+
+  reg(57, {
+    title: 'Der Schlüsselaustausch', host: 'ghost@dh',
+    hints: ['Alice und Bob einigen sich öffentlich auf p und g. Jeder wählt eine geheime Zahl (a bzw. b) und sendet g^a mod p bzw. g^b mod p.', 'Mit "potenz 5 x 23" prüfst du, welches x die Zahl A = 8 ergibt. Probiere x = 1, 2, 3 ... Bei so kleinen Zahlen geht das schnell.', 'Hast du Alices geheimes a gefunden, ist das gemeinsame Geheimnis B hoch a mod p, also: potenz 19 a 23.'],
+    chips: [{ c: 'werte' }, { c: 'potenz ', fill: true }, { c: 'antwort ', fill: true }],
+    help: ['werte ............. öffentliche Werte anzeigen', 'potenz <b> <e> <m>  berechnet b hoch e modulo m', 'antwort <zahl> ... gemeinsames Geheimnis abgeben'],
+    intro: ['Alice und Bob tauschen über eine offene Leitung einen Schlüssel aus (Diffie-Hellman). Du bist Eve und hörst mit.', 'Du kennst nur die öffentlichen Werte. Weil die Zahlen hier winzig sind, kannst du Alices geheime Zahl durch Probieren finden.', 'Gesucht: das gemeinsame Geheimnis. (Echte Verfahren nutzen riesige Zahlen, dann wäre das unmöglich.)', '', 'Befehle: werte, potenz <b> <e> <m>, antwort <zahl>, hinweis'],
+    run: function (cmd, arg) {
+      if (cmd === 'werte') {
+        printAll(['p = ' + DH.p + '   (öffentlich, Primzahl)', 'g = ' + DH.g + '    (öffentlich)', 'A = ' + DH.A + '    (Alice sendet g^a mod p)', 'B = ' + DH.B + '   (Bob sendet g^b mod p)'], 'logline');
+        return true;
+      }
+      if (cmd === 'potenz') {
+        var v = (arg.match(/\d+/g) || []).map(Number);
+        if (v.length !== 3 || v[2] < 2 || v[2] > 1000000 || v[1] > 1000000) { print('Benutzung: potenz <basis> <exponent> <modulo>   (Modulo 2 bis 1000000)', 'warn'); return true; }
+        print(v[0] + '^' + v[1] + ' mod ' + v[2] + ' = ' + modPow(v[0], v[1], v[2]), 'info');
+        return true;
+      }
+      if (cmd === 'antwort') {
+        if (!/^\d+$/.test(arg.trim())) { print('Benutzung: antwort <zahl>', 'warn'); return true; }
+        if (parseInt(arg, 10) === DH.s) { solve(57); } else { print('Das ist nicht das gemeinsame Geheimnis. Finde zuerst a mit g^a mod p = A.', 'err'); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 58: Schiebepuzzle (3x3) */
+
+  var SLIDE_START = [5, 6, 8, 1, 3, 2, 0, 4, 7];
+  var slide = [];
+  function slideShow() {
+    for (var r = 0; r < 3; r++) { print(slide.slice(r * 3, r * 3 + 3).map(function (v) { return v ? String(v) : '_'; }).join(' '), 'logline'); }
+  }
+
+  reg(58, {
+    title: 'Das Schiebepuzzle', host: 'ghost@schiebe',
+    hints: ['Du schiebst eine Kachel in die Lücke (_). Nur Kacheln direkt neben der Lücke lassen sich bewegen.', 'Ziel ist die Reihenfolge 1 2 3 / 4 5 6 / 7 8 _. Löse zuerst die oberste Reihe, dann die zweite.', 'Die letzten beiden Reihen löst du gemeinsam, zum Schluss kreisen die letzten Kacheln um die Lücke. Mit "neu" beginnst du von vorn.'],
+    chips: [{ c: 'brett' }, { c: 'schiebe ', fill: true }, { c: 'neu' }],
+    help: ['brett ............. Feld anzeigen', 'schiebe <zahl> ... Kachel in die Lücke schieben', 'neu .............. von vorn beginnen'],
+    intro: ['Ein Schloss besteht aus acht verschiebbaren Kacheln und einer Lücke.', 'Bringe die Kacheln in die Reihenfolge 1 bis 8, die Lücke unten rechts.', '', 'Befehle: brett, schiebe <zahl>, neu, hinweis'],
+    start: function () { slide = SLIDE_START.slice(); },
+    after: function () { print(''); slideShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'brett') { slideShow(); return true; }
+      if (cmd === 'neu') { slide = SLIDE_START.slice(); slideShow(); return true; }
+      if (cmd === 'schiebe') {
+        var n = /^\d$/.test(arg.trim()) ? parseInt(arg, 10) : 0;
+        if (n < 1 || n > 8) { print('Benutzung: schiebe <zahl von 1 bis 8>', 'warn'); return true; }
+        var i = slide.indexOf(n), g = slide.indexOf(0);
+        var near = (Math.abs(i - g) === 3) || (Math.abs(i - g) === 1 && Math.floor(i / 3) === Math.floor(g / 3));
+        if (!near) { print('Die Kachel ' + n + ' liegt nicht neben der Lücke.', 'err'); return true; }
+        slide[g] = n; slide[i] = 0;
+        slideShow();
+        if (slide.join('') === '123456780') { print('Das Schloss springt auf!', 'info'); solve(58); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 59: Minenfeld (Logik, 6x6) */
+
+  var MINES = ['2*2000', '2*2111', '1112*2', '1102*3', '*1123*', '111*21'];
+  var MINE_OPEN = [[0, 2], [0, 3], [0, 4], [0, 5], [1, 2], [1, 3], [1, 4], [1, 5]];
+  var mine = { shown: {}, flag: {} };
+  function mineStart() {
+    mine = { shown: {}, flag: {} };
+    MINE_OPEN.forEach(function (c) { mine.shown[c[0] + ',' + c[1]] = true; });
+  }
+  function mineShow() {
+    print('   1 2 3 4 5 6', 'dim');
+    for (var r = 0; r < 6; r++) {
+      var line = (r + 1) + '  ';
+      for (var c = 0; c < 6; c++) {
+        var k = r + ',' + c;
+        line += (mine.shown[k] ? (MINES[r].charAt(c) === '0' ? '.' : MINES[r].charAt(c)) : (mine.flag[k] ? 'F' : '#')) + ' ';
+      }
+      print(line, 'logline');
+    }
+  }
+  function mineReveal(r, c) {
+    var stack = [[r, c]];
+    while (stack.length) {
+      var p = stack.pop(), k = p[0] + ',' + p[1];
+      if (mine.shown[k]) { continue; }
+      mine.shown[k] = true; delete mine.flag[k];
+      if (MINES[p[0]].charAt(p[1]) === '0') {
+        for (var dr = -1; dr <= 1; dr++) { for (var dc = -1; dc <= 1; dc++) {
+          var nr = p[0] + dr, nc = p[1] + dc;
+          if (nr >= 0 && nr < 6 && nc >= 0 && nc < 6) { stack.push([nr, nc]); }
+        } }
+      }
+    }
+  }
+
+  reg(59, {
+    title: 'Das Minenfeld', host: 'ghost@minen',
+    hints: ['Eine Zahl sagt, wie viele der 8 Nachbarfelder Minen sind. Beginne bei einer Zahl, bei der gerade so viele verdeckte Nachbarn übrig sind, wie sie anzeigt: Dann sind alle diese Minen.', 'Mit "flagge z s" markierst du ein sicheres Minenfeld. Mit "aufdecken z s" deckst du ein sicheres Feld auf. Alle Felder sind per Logik lösbar, du musst nie raten.', 'Wenn eine Zahl schon alle ihre Minen hat, sind die restlichen verdeckten Nachbarn sicher. Arbeite dich von oben nach unten vor.'],
+    chips: [{ c: 'brett' }, { c: 'aufdecken ', fill: true }, { c: 'flagge ', fill: true }, { c: 'neu' }],
+    help: ['brett ............. Feld anzeigen', 'aufdecken <z> <s>  Feld aufdecken (Zeile, Spalte)', 'flagge <z> <s> ... Feld als Mine markieren oder Markierung entfernen', 'neu .............. von vorn beginnen'],
+    intro: ['Ein Minenfeld mit 7 Minen auf 6x6 Feldern. Decke alle sicheren Felder auf, ohne eine Mine zu treffen.', '# = verdeckt, F = Flagge, . = keine Mine in der Nähe, Zahl = Minen in den Nachbarfeldern.', '', 'Befehle: brett, aufdecken <z> <s>, flagge <z> <s>, neu, hinweis'],
+    start: mineStart,
+    after: function () { print(''); mineShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'brett') { mineShow(); return true; }
+      if (cmd === 'neu') { mineStart(); mineShow(); return true; }
+      if (cmd === 'aufdecken' || cmd === 'auf' || cmd === 'flagge') {
+        var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
+        if (v.length !== 2 || v[0] < 1 || v[0] > 6 || v[1] < 1 || v[1] > 6) { print('Benutzung: ' + cmd + ' <zeile> <spalte>   (1 bis 6)', 'warn'); return true; }
+        var r = v[0] - 1, c = v[1] - 1, k = r + ',' + c;
+        if (mine.shown[k]) { print('Dieses Feld ist schon aufgedeckt.', 'err'); return true; }
+        if (cmd === 'flagge') { if (mine.flag[k]) { delete mine.flag[k]; } else { mine.flag[k] = true; } mineShow(); return true; }
+        if (MINES[r].charAt(c) === '*') { print('BUMM! Das war eine Mine. Das Feld wird zurückgesetzt.', 'err'); mineStart(); mineShow(); return true; }
+        mineReveal(r, c);
+        mineShow();
+        var open = Object.keys(mine.shown).length;
+        if (open === 36 - 7) { print('Alle sicheren Felder sind aufgedeckt!', 'info'); solve(59); }
+        return true;
+      }
+      return false;
+    }
+  });
+
+  /* 60: Bilderraetsel (Nonogramm 5x5) */
+
+  var NONO_PIC = ['01110', '01010', '11111', '11011', '11111'];
+  function nonoClue(bits) {
+    var out = [], c = 0;
+    bits.forEach(function (v) { if (v) { c++; } else if (c) { out.push(c); c = 0; } });
+    if (c) { out.push(c); }
+    return out.length ? out : [0];
+  }
+  var NONO_ROWS = NONO_PIC.map(function (r) { return nonoClue(r.split('').map(Number)); });
+  var NONO_COLS = [0, 1, 2, 3, 4].map(function (c) { return nonoClue(NONO_PIC.map(function (r) { return +r.charAt(c); })); });
+  var nono = [];
+  function nonoShow() {
+    print('Spalten: ' + NONO_COLS.map(function (c) { return '[' + c.join(' ') + ']'; }).join(' '), 'logline');
+    print('    1 2 3 4 5', 'dim');
+    nono.forEach(function (row, r) { print((r + 1) + '   ' + row.map(function (v) { return v ? '#' : '.'; }).join(' ') + '   [' + NONO_ROWS[r].join(' ') + ']', 'logline'); });
+  }
+  function nonoDone() {
+    for (var r = 0; r < 5; r++) { if (nonoClue(nono[r]).join() !== NONO_ROWS[r].join()) { return false; } }
+    for (var c = 0; c < 5; c++) { if (nonoClue(nono.map(function (row) { return row[c]; })).join() !== NONO_COLS[c].join()) { return false; } }
+    return true;
+  }
+
+  reg(60, {
+    title: 'Das Bilderrätsel', host: 'ghost@bild',
+    hints: ['Die Zahlen am Rand sagen, wie viele zusammenhängende Felder in dieser Zeile oder Spalte gefüllt sind. Mehrere Zahlen bedeuten mehrere Blöcke mit mindestens einer Lücke dazwischen.', 'Beginne mit Zeilen und Spalten, die voll sind: [5] füllt die ganze Reihe. Und [1 1 1] in einer Spalte der Länge 5 ist nur auf eine Weise möglich.', 'Mit "fuelle z s" füllst du ein Feld, nochmal fuelle leert es wieder. Das fertige Bild ist ein Schloss.'],
+    chips: [{ c: 'brett' }, { c: 'fuelle ', fill: true }, { c: 'neu' }],
+    help: ['brett ............. Feld und Zahlen anzeigen', 'fuelle <z> <s> ... Feld füllen oder leeren (Zeile, Spalte)', 'neu .............. alles leeren'],
+    intro: ['Ein Bilderrätsel (Nonogramm) schützt das Schloss. Die Zahlen am Rand verraten, wie viele Felder in einer Reihe nacheinander gefüllt sind.', 'Fülle das Feld so, dass alle Zeilen- und Spaltenzahlen stimmen.', '', 'Befehle: brett, fuelle <zeile> <spalte>, neu, hinweis'],
+    start: function () { nono = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); },
+    after: function () { print(''); nonoShow(); },
+    run: function (cmd, arg) {
+      if (cmd === 'brett') { nonoShow(); return true; }
+      if (cmd === 'neu') { nono = [0, 1, 2, 3, 4].map(function () { return [0, 0, 0, 0, 0]; }); nonoShow(); return true; }
+      if (cmd === 'fuelle' || cmd === 'toggle') {
+        var v = intsIn(arg.replace(/^(\d)(\d)$/, '$1 $2'));
+        if (v.length !== 2 || v[0] < 1 || v[0] > 5 || v[1] < 1 || v[1] > 5) { print('Benutzung: fuelle <zeile> <spalte>   (1 bis 5)', 'warn'); return true; }
+        nono[v[0] - 1][v[1] - 1] ^= 1;
+        nonoShow();
+        if (nonoDone()) { print('Das Bild stimmt: Es ist ein Schloss!', 'info'); solve(60); }
         return true;
       }
       return false;
