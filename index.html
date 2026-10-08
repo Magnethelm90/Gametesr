@@ -53,32 +53,25 @@ header {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 14px;
-  background: var(--panel);
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
+  background: linear-gradient(180deg, #121c2c, var(--panel));
   border-bottom: 1px solid var(--line);
   font-size: 13px;
 }
-.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .12em; color: #fff; font-size: 14px; }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .08em; color: #fff; font-size: 14px; white-space: nowrap; }
 .logo svg { width: 24px; height: 24px; flex: none; }
 .logo i { font-style: normal; color: var(--fg); }
-.progress { color: var(--dim); white-space: nowrap; margin-left: auto; }
+.progress { color: var(--dim); white-space: nowrap; margin-left: auto; font-size: 12px; font-variant-numeric: tabular-nums; }
 #bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
 #bar i { display: block; height: 100%; width: 0; background: var(--fg); box-shadow: 0 0 8px rgba(94, 234, 212, .7); transition: width .4s ease; }
-.sndbtn {
-  min-height: 40px;
-  padding: 0 12px;
-  font: inherit;
-  font-size: 13px;
-  color: var(--fg);
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.sndbtn[aria-pressed="false"] { color: var(--dim); }
-.sndbtn:focus-visible, .goal:focus-visible, .chip:focus-visible, .cell:focus-visible, #in:focus-visible, #go:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
+.hbtns { display: flex; gap: 5px; flex: none; }
+.ibtn { width: 38px; height: 38px; padding: 0; display: grid; place-items: center; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; touch-action: manipulation; transition: background .12s, transform .08s, color .12s; }
+.ibtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.ibtn:active { background: var(--faint); transform: scale(.94); }
+#snd[aria-pressed="false"] { color: var(--dim); }
+#snd[aria-pressed="true"] .off, #snd[aria-pressed="false"] .on { display: none; }
+.ibtn:focus-visible, .goal:focus-visible, .chip:focus-visible, .cell:focus-visible, #in:focus-visible, #go:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
 
 /* Zielzeile */
 .goal {
@@ -257,8 +250,26 @@ form { display: flex; align-items: center; gap: 8px; }
 .cell.tile.lock { color: var(--faint); border-color: var(--line); background: transparent; }
 .cap { font-size: 12px; color: var(--dim); text-align: center; }
 
+/* Kapitel in der Levelauswahl */
+.chap { width: 100%; background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.chap > button { width: 100%; display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; padding: 10px 14px; font: inherit; text-align: left; color: var(--text); background: transparent; border: 0; cursor: pointer; touch-action: manipulation; }
+.chap .nm { font-weight: 700; font-size: 14.5px; color: #fff; }
+.chap .ct { font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.chap .pb { grid-column: 1 / -1; height: 4px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.chap .pb i { display: block; height: 100%; background: linear-gradient(90deg, #4fd6c2, #7cc4ff); border-radius: 99px; }
+.chap.full .pb i { background: var(--ok); }
+.chap .tiles { padding: 4px 12px 12px; }
+.chap.open { border-color: var(--faint); }
+
+/* Konfetti */
+.confetti { position: absolute; left: 50%; top: 56px; width: 0; height: 0; pointer-events: none; }
+.confetti i { position: absolute; width: 7px; height: 11px; border-radius: 2px; opacity: 0; animation: burst 1.1s ease-out forwards; }
+@keyframes burst { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
+.winbox { position: relative; }
+
 /* Missionskarte */
-#out .card { white-space: normal; margin: 16px 0 8px; padding: 14px 16px 12px; font-family: var(--ui); background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--faint); border-radius: 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); }
+#out .card { animation: rise .35s cubic-bezier(.2, .8, .3, 1); white-space: normal; margin: 16px 0 8px; padding: 14px 16px 12px; font-family: var(--ui); background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--faint); border-radius: 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); }
 #out .card div { white-space: pre-line; min-height: 0; }
 #out .card .kicker { font-size: 11px; letter-spacing: .16em; font-weight: 700; color: var(--fg); }
 #out .card .ttl { font-size: 21px; line-height: 1.25; font-weight: 800; color: #fff; margin: 2px 0 8px; }
@@ -280,6 +291,7 @@ form { display: flex; align-items: center; gap: 8px; }
 .winbox .check path { fill: none; stroke: var(--ok); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s .15s ease forwards; }
 .winbtns { display: flex; flex-direction: column; gap: 8px; }
 .winbtns .chip { width: 100%; }
+@keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes pop { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .winbox, .winbox .check path { animation: none; stroke-dashoffset: 0; } }
@@ -293,7 +305,7 @@ form { display: flex; align-items: center; gap: 8px; }
 @media (orientation: landscape) and (max-height: 540px) {
   body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 42%); grid-template-rows: auto auto minmax(0, 1fr) auto; }
   header { grid-column: 1 / -1; grid-row: 1; padding: 2px 14px; }
-  .sndbtn { min-height: 32px; }
+  .ibtn { width: 34px; height: 34px; }
   .goal { grid-column: 1 / -1; grid-row: 2; padding: 4px 14px; font-size: 12px; }
   #out { grid-column: 1; grid-row: 3; min-height: 0; }
   #side { grid-column: 2; grid-row: 3; max-height: none; min-height: 0; overflow: hidden; border-top: 0; border-left: 1px solid var(--line); }
@@ -317,7 +329,11 @@ form { display: flex; align-items: center; gap: 8px; }
 <header>
   <span class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#121b29" stroke="#5eead4" stroke-width="1.5"/><path d="M6 8l5 4-5 4" fill="none" stroke="#5eead4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 16h5" stroke="#d6e2f0" stroke-width="2" stroke-linecap="round"/></svg><span>GHOST<i>//SHELL</i></span></span>
   <span class="progress" id="progress" aria-label="Fortschritt"></span>
-  <button id="snd" class="sndbtn" type="button" aria-pressed="true" aria-label="Sound ein- oder ausschalten">&#9835; AN</button>
+  <div class="hbtns">
+    <button id="hintBtn" class="ibtn" type="button" aria-label="Hinweis anzeigen" title="Hinweis"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.3 1.1 2.2V16h5v0c0-.9.4-1.6 1.1-2.2A6 6 0 0 0 12 3z"/></svg></button>
+    <button id="menuBtn" class="ibtn" type="button" aria-label="Zur Levelübersicht" title="Levelübersicht"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+    <button id="snd" class="ibtn" type="button" aria-pressed="true" aria-label="Ton ausschalten" title="Ton"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5L6 9H3v6h3l5 4V5z"/><g class="on"><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></g><g class="off"><path d="M16 9l5 6M21 9l-5 6"/></g></svg></button>
+  </div>
   <div id="bar" aria-hidden="true"><i></i></div>
 </header>
 <button id="goal" class="goal" type="button" hidden aria-expanded="false" aria-label="Ziel des Levels, tippen zum Aufklappen"></button>
@@ -2954,7 +2970,8 @@ form { display: flex; align-items: center; gap: 8px; }
   function updateSoundButton() {
     var b = document.getElementById('snd');
     b.setAttribute('aria-pressed', audio.on ? 'true' : 'false');
-    b.textContent = '\u266B ' + (audio.on ? 'AN' : 'AUS');
+    b.setAttribute('aria-label', audio.on ? 'Ton ausschalten' : 'Ton einschalten');
+    b.title = audio.on ? 'Ton aus' : 'Ton an';
   }
 
   function setSound(on) {
@@ -3006,7 +3023,24 @@ form { display: flex; align-items: center; gap: 8px; }
   function tap(cmd) { sfx.key(); buzz(8); run(cmd, true); }
 
   var winEl = document.getElementById('win'), winToken = 0;
-  function hideWin() { winToken++; winEl.hidden = true; }
+  function hideWin() { winToken++; winEl.hidden = true; var old = winEl.querySelector('.confetti'); if (old) { old.parentNode.removeChild(old); } }
+  function confetti() {
+    var box = winEl.querySelector('.winbox'), old = winEl.querySelector('.confetti');
+    if (old) { old.parentNode.removeChild(old); }
+    var c = document.createElement('div');
+    c.className = 'confetti';
+    var colors = ['#5eead4', '#7cc4ff', '#6ee7a0', '#f5c561', '#ff7b86'];
+    for (var i = 0; i < 28; i++) {
+      var p = document.createElement('i'), a = Math.random() * Math.PI * 2, d = 70 + Math.random() * 120;
+      p.style.background = colors[i % colors.length];
+      p.style.setProperty('--dx', Math.round(Math.cos(a) * d) + 'px');
+      p.style.setProperty('--dy', Math.round(Math.sin(a) * d - 30) + 'px');
+      p.style.setProperty('--rot', Math.round(Math.random() * 540 - 270) + 'deg');
+      p.style.animationDelay = Math.round(Math.random() * 120) + 'ms';
+      c.appendChild(p);
+    }
+    box.appendChild(c);
+  }
   function showWin(n) {
     var token = ++winToken;
     setTimeout(function () {
@@ -3018,11 +3052,14 @@ form { display: flex; align-items: center; gap: 8px; }
       nextBtn.textContent = last ? 'Zur Übersicht' : 'Weiter: Level ' + (n + 1) + ' \u00b7 ' + TITLES[n + 1];
       nextBtn.onclick = function () { hideWin(); if (last) { return; } tap('level ' + (n + 1)); };
       winEl.hidden = false;
+      confetti();
       nextBtn.focus();
       buzz([20, 50, 20]);
     }, 650);
   }
   document.getElementById('winMenu').addEventListener('click', hideWin);
+  document.getElementById('hintBtn').addEventListener('click', function () { tap('hinweis'); });
+  document.getElementById('menuBtn').addEventListener('click', function () { tap('menu'); });
   winEl.addEventListener('click', function (e) { if (e.target === winEl) { hideWin(); } });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !winEl.hidden) { hideWin(); } });
 
@@ -3144,7 +3181,7 @@ form { display: flex; align-items: center; gap: 8px; }
     var host = hostName();
     promptEl.textContent = host.indexOf(':') === -1 ? host + ':~$' : host + '$';
     var doneN = state.solved.filter(Boolean).length;
-    progressEl.textContent = doneN + '/' + LEVEL_COUNT + ' gelöst';
+    progressEl.textContent = doneN + '/' + LEVEL_COUNT;
     document.querySelector('#bar i').style.width = Math.round(doneN * 100 / LEVEL_COUNT) + '%';
   }
 
@@ -3188,7 +3225,7 @@ form { display: flex; align-items: center; gap: 8px; }
         { c: 'rot13 ', fill: true }, { c: 'hex ', fill: true }, { c: 'umkehren ', fill: true }, { c: 'tresor ', fill: true }
       ];
     }
-    return base.concat([{ c: 'hinweis' }, { c: 'menu' }]);
+    return base;
   }
 
   function renderChips() {
@@ -3213,6 +3250,12 @@ form { display: flex; align-items: center; gap: 8px; }
   }
 
   var menuSig = '';
+  var CHAPTERS = [
+    { t: 'Einstieg', from: 1, to: 7 }, { t: 'Chiffren & Logik', from: 8, to: 17 }, { t: 'Chiffren-Werkstatt', from: 18, to: 35 },
+    { t: 'Knobeln & Praxis', from: 36, to: 60 }, { t: 'Meisterklasse', from: 61, to: 80 }
+  ];
+  var menuOpen = null;
+  function chapterOf(n) { for (var i = 0; i < CHAPTERS.length; i++) { if (n >= CHAPTERS[i].from && n <= CHAPTERS[i].to) { return i; } } return 0; }
   function buildMenuPanel() {
     var wrap = document.createElement('div');
     wrap.className = 'wrap menuwrap';
@@ -3223,26 +3266,42 @@ form { display: flex; align-items: center; gap: 8px; }
     cont.textContent = next === -1 ? '\u25b6 Alles geschafft! Level 1 nochmal spielen' : '\u25b6 Weiter: Level ' + (next + 1) + ' \u00b7 ' + TITLES[next + 1];
     cont.addEventListener('click', function () { tap('level ' + (next === -1 ? 1 : next + 1)); });
     wrap.appendChild(cont);
-    var tiles = document.createElement('div');
-    tiles.className = 'tiles';
-    for (var i = 1; i <= LEVEL_COUNT; i++) {
-      (function (n) {
-        var done = state.solved[n - 1], open = n === 1 || state.solved[n - 2];
-        var cls = 'tile ' + (done ? 'done' : (n === next + 1 ? 'next' : (open ? '' : 'lock')));
-        tiles.appendChild(cellBtn(String(n), cls.trim(), open ? function () { tap('level ' + n); } : null, 'Level ' + n + ': ' + TITLES[n] + (done ? ', gelöst' : (open ? ', offen' : ', gesperrt'))));
-      })(i);
-    }
-    wrap.appendChild(tiles);
-    var cap = document.createElement('div');
-    cap.className = 'cap';
-    cap.textContent = state.solved.filter(Boolean).length + ' von ' + LEVEL_COUNT + ' gelöst \u00b7 tippe ein Level';
-    wrap.appendChild(cap);
+    if (menuOpen === null) { menuOpen = chapterOf(next === -1 ? 1 : next + 1); }
+    CHAPTERS.forEach(function (ch, ci) {
+      var total = ch.to - ch.from + 1, done = 0, n;
+      for (n = ch.from; n <= ch.to; n++) { if (state.solved[n - 1]) { done++; } }
+      var card = document.createElement('div');
+      card.className = 'chap' + (menuOpen === ci ? ' open' : '') + (done === total ? ' full' : '');
+      var head = document.createElement('button');
+      head.type = 'button';
+      head.setAttribute('aria-expanded', menuOpen === ci ? 'true' : 'false');
+      var nm = document.createElement('span'); nm.className = 'nm'; nm.textContent = (ci + 1) + '. ' + ch.t;
+      var ct = document.createElement('span'); ct.className = 'ct'; ct.textContent = done + '/' + total;
+      var pb = document.createElement('span'); pb.className = 'pb'; var bi = document.createElement('i'); bi.style.width = Math.round(done * 100 / total) + '%'; pb.appendChild(bi);
+      head.appendChild(nm); head.appendChild(ct); head.appendChild(pb);
+      head.addEventListener('click', function () { menuOpen = menuOpen === ci ? -1 : ci; menuSig = ''; ensureMenuPanel(); });
+      card.appendChild(head);
+      if (menuOpen === ci) {
+        var tiles = document.createElement('div');
+        tiles.className = 'tiles';
+        for (n = ch.from; n <= ch.to; n++) {
+          (function (n) {
+            var d = state.solved[n - 1], open = n === 1 || state.solved[n - 2];
+            var cls = 'tile ' + (d ? 'done' : (n === next + 1 ? 'next' : (open ? '' : 'lock')));
+            tiles.appendChild(cellBtn(String(n), cls.trim(), open ? function () { tap('level ' + n); } : null, 'Level ' + n + ': ' + TITLES[n] + (d ? ', gelöst' : (open ? ', offen' : ', gesperrt'))));
+          })(n);
+        }
+        card.appendChild(tiles);
+      }
+      wrap.appendChild(card);
+    });
     return wrap;
   }
   function ensureMenuPanel() {
     var sig = state.solved.join('');
-    if (panelEl.firstChild && panelEl.firstChild.className.indexOf('menuwrap') !== -1 && sig === menuSig) { return; }
-    menuSig = sig;
+    var sigAll = sig + '|' + menuOpen;
+    if (panelEl.firstChild && panelEl.firstChild.className.indexOf('menuwrap') !== -1 && sigAll === menuSig) { return; }
+    menuSig = sigAll;
     setPanel(buildMenuPanel());
   }
   function refresh() { renderStatus(); renderChips(); renderGoal(); if (state.level === 0) { ensureMenuPanel(); } }
@@ -3303,14 +3362,17 @@ form { display: flex; align-items: center; gap: 8px; }
     hideWin();
     state.level = 0;
     menuSig = '';
+    menuOpen = null;
     refresh();
     var first = state.solved.indexOf(false);
     var center = first === -1 ? LEVEL_COUNT - 1 : first;
     var from = all ? 0 : Math.max(0, center - 2);
     var to = all ? LEVEL_COUNT - 1 : Math.min(LEVEL_COUNT - 1, center + 4);
-    print('');
-    print('=== MISSIONEN ===', 'head');
-    print('Gelöst: ' + state.solved.filter(Boolean).length + '/' + LEVEL_COUNT, 'dim');
+    if (all) {
+      print('');
+      print('=== MISSIONEN ===', 'head');
+      print('Gelöst: ' + state.solved.filter(Boolean).length + '/' + LEVEL_COUNT, 'dim');
+    }
     if (all && from > 0) { print('... (' + from + ' frühere Level, alle mit "menu alle")', 'dim'); }
     for (var i = from + 1; all && i <= to + 1; i++) {
       var open = i === 1 || state.solved[i - 2];
@@ -3319,7 +3381,7 @@ form { display: flex; align-items: center; gap: 8px; }
     }
     if (all && to < LEVEL_COUNT - 1) { print('... (' + (LEVEL_COUNT - 1 - to) + ' weitere Level)', 'dim'); }
     print('');
-    print(all ? 'Starte mit "level <nummer>". Hilfe: "hilfe".' : 'Tippe unten ein Level an, oder gib "level <nummer>" ein. Alle Level als Liste: "menu alle". Hilfe: "hilfe".', 'dim');
+    print(all ? 'Starte mit "level <nummer>". Hilfe: "hilfe".' : 'Wähle unten ein Level aus, oder gib "level <nummer>" ein. Alle als Liste: "menu alle".', 'dim');
   }
 
   function showHelp() {
