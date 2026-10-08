@@ -524,7 +524,7 @@ form { display: flex; align-items: center; gap: 8px; }
     ],
     5: [
       'Jedes Zeichen besteht aus 8 Bits (Nullen und Einsen). 8 Bits ergeben eine Zahl, und die Zahl steht für einen Buchstaben (ASCII).',
-      '"byte <n>" zeigt dir das n-te Zeichen der Nachricht. Oder kopiere alles und nutze "bin <bits>".',
+      '"bin" wandelt das ganze Signal in Text um. "byte <n>" erklärt dir ein einzelnes Zeichen.',
       'Die Nachricht nennt eine PIN aus vier Ziffern.'
     ],
     6: [
@@ -3041,7 +3041,7 @@ form { display: flex; align-items: center; gap: 8px; }
     } else if (state.level === 4) {
       base = [{ c: 'dump' }, { c: 'base64' }, { c: 'base64 ', fill: true }, { c: 'schluessel ', fill: true }];
     } else if (state.level === 5) {
-      base = [{ c: 'signal' }, { c: 'byte ', fill: true }, { c: 'bin ', fill: true }, { c: 'pin ', fill: true }];
+      base = [{ c: 'signal' }, { c: 'bin' }, { c: 'byte ', fill: true }, { c: 'pin ', fill: true }];
     } else if (state.level === 6) {
       base = [{ c: 'scan' }, { c: 'info ', fill: true }, { c: 'ziel ', fill: true }];
     } else {
@@ -3174,7 +3174,7 @@ form { display: flex; align-items: center; gap: 8px; }
     } else if (state.level === 4) {
       printAll(['', 'MISSION 4:', 'dump ............. Datenpaket anzeigen', 'base64 [text] ..... Base64 zurückverwandeln (ohne Text: das Datenpaket)', 'schluessel <wort>  Schlüsselwort abgeben']);
     } else if (state.level === 5) {
-      printAll(['', 'MISSION 5:', 'signal ........... Bitfolge anzeigen', 'byte <n> ......... n-tes Zeichen (8 Bit) entschlüsseln', 'bin <bits> ....... Bits in Text umwandeln', 'pin <zahl> ....... PIN abgeben']);
+      printAll(['', 'MISSION 5:', 'signal ........... Bitfolge anzeigen', 'bin [bits] ....... Bits in Text umwandeln (ohne Angabe: das ganze Signal)', 'byte <n> ......... einzelnes Zeichen (8 Bit) erklären', 'pin <zahl> ....... PIN abgeben']);
     } else if (state.level === 6) {
       printAll(['', 'MISSION 6:', 'scan ............. Netzwerk-Scan anzeigen', 'info <host> ...... Details zu einem Rechner', 'ziel <host> ...... Schwächsten Rechner melden']);
     } else if (EXTRA[state.level]) {
@@ -3257,7 +3257,7 @@ form { display: flex; align-items: center; gap: 8px; }
         'Ein Türsteuerungs-Signal wurde mitgeschnitten: nur Nullen und Einsen.',
         'Jede Gruppe aus 8 Bits ist ein Zeichen. Finde die PIN.',
         '',
-        'Befehle: signal, byte <n>, bin <bits>, pin <zahl>, hinweis'
+        'Tipp: "bin" wandelt das ganze Signal in Text um. "byte <n>" erklärt ein einzelnes Zeichen.', 'Befehle: signal, bin, byte <n>, pin <zahl>, hinweis'
       ]);
     } else if (n === 6) {
       printAll([
@@ -3429,7 +3429,7 @@ form { display: flex; align-items: center; gap: 8px; }
     var bits = toBits(L5_PLAIN);
     if (cmd === 'signal') {
       print(bits.join(' '), 'cipher');
-      print(bits.length + ' Gruppen. Mit "byte <n>" entschlüsselst du die n-te.', 'dim');
+      print(bits.length + ' Gruppen zu je 8 Bit. "bin" wandelt alles in Text um, "byte <n>" erklärt eine einzelne Gruppe.', 'dim');
       return true;
     }
     if (cmd === 'byte') {
@@ -3440,8 +3440,8 @@ form { display: flex; align-items: center; gap: 8px; }
       return true;
     }
     if (cmd === 'bin') {
-      var clean = arg.replace(/\s+/g, '');
-      if (!/^[01]+$/.test(clean) || clean.length % 8) { print('Benutzung: bin <Bits>, Länge muss durch 8 teilbar sein.', 'warn'); return true; }
+      var clean = (arg || bits.join('')).replace(/\s+/g, '');
+      if (!/^[01]+$/.test(clean) || clean.length % 8) { print('Benutzung: bin [Bits], die Länge muss durch 8 teilbar sein.', 'warn'); return true; }
       var text = '';
       for (var i = 0; i < clean.length; i += 8) { text += String.fromCharCode(parseInt(clean.substr(i, 8), 2)); }
       print('Ergebnis: ' + (printableOrNull(text) || '(nicht lesbar)'), 'info');
