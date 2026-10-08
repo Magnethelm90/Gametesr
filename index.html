@@ -11,27 +11,33 @@
 <title>GHOST//SHELL</title>
 <style>
 :root {
-  --bg: #050805;
-  --panel: #09110b;
-  --fg: #38ff7a;
-  --text: #c6f2d2;
-  --dim: #6fbf8a;
-  --faint: #24523a;
-  --line: #1a3a29;
-  --err: #ff6b6b;
-  --warn: #ffd166;
-  --info: #6bd6ff;
-  --ok: #b9ff66;
+  --bg: #0a0e15;
+  --panel: #0f1621;
+  --surface: #121b29;
+  --surface-2: #17223a;
+  --fg: #5eead4;
+  --text: #d6e2f0;
+  --dim: #8496ae;
+  --faint: #2a3a54;
+  --line: #1e2c42;
+  --err: #ff7b86;
+  --warn: #f5c561;
+  --info: #7cc4ff;
+  --ok: #6ee7a0;
   --font: ui-monospace, "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
-  background: var(--bg) radial-gradient(120% 60% at 50% 0%, #0e2014 0%, rgba(5, 8, 5, 0) 70%) no-repeat;
+  background-color: var(--bg);
+  background-image: radial-gradient(90% 50% at 12% 0%, rgba(94, 234, 212, .10), rgba(94, 234, 212, 0) 60%), radial-gradient(70% 40% at 100% 100%, rgba(124, 196, 255, .08), rgba(124, 196, 255, 0) 60%);
+  background-repeat: no-repeat;
   color: var(--text);
-  font-family: var(--font);
+  font-family: var(--ui);
   font-size: 15px;
   line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -53,10 +59,12 @@ header {
   border-bottom: 1px solid var(--line);
   font-size: 13px;
 }
-.logo { font-weight: bold; letter-spacing: .1em; color: var(--fg); text-shadow: 0 0 10px rgba(56, 255, 122, .55); }
+.logo { display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .12em; color: #fff; font-size: 14px; }
+.logo svg { width: 24px; height: 24px; flex: none; }
+.logo i { font-style: normal; color: var(--fg); }
 .progress { color: var(--dim); white-space: nowrap; margin-left: auto; }
 #bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
-#bar i { display: block; height: 100%; width: 0; background: var(--fg); box-shadow: 0 0 8px rgba(56, 255, 122, .7); transition: width .4s ease; }
+#bar i { display: block; height: 100%; width: 0; background: var(--fg); box-shadow: 0 0 8px rgba(94, 234, 212, .7); transition: width .4s ease; }
 .sndbtn {
   min-height: 40px;
   padding: 0 12px;
@@ -80,10 +88,10 @@ header {
   font: inherit;
   font-size: 13px;
   color: var(--text);
-  background: rgba(56, 255, 122, .05);
+  background: var(--surface);
   border: 0;
   border-bottom: 1px solid var(--line);
-  padding: 7px 14px;
+  padding: 8px 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -91,10 +99,12 @@ header {
   touch-action: manipulation;
 }
 .goal.open { white-space: normal; }
-.goal .lv { color: var(--fg); font-weight: bold; }
+.goal .lv { color: var(--fg); font-weight: 700; }
 
 /* Terminal-Ausgabe */
 #out {
+  font-family: var(--font);
+  font-size: 14.5px;
   flex: 1;
   min-height: 72px;
   overflow-y: auto;
@@ -104,14 +114,16 @@ header {
   overscroll-behavior: contain;
 }
 #out div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.5em; }
-#out .cmd { color: var(--dim); margin-top: 12px; font-size: .92em; }
+#out .cmd { color: var(--fg); opacity: .75; margin-top: 12px; font-size: .92em; }
 #out .dim { color: var(--dim); }
 #out .info { color: var(--info); }
-#out .head { color: var(--fg); font-weight: bold; margin-top: 14px; padding: 6px 10px; background: rgba(56, 255, 122, .07); border-left: 3px solid var(--fg); border-radius: 0 6px 6px 0; }
-#out .ok { color: var(--ok); font-weight: bold; padding: 2px 10px; background: rgba(185, 255, 102, .08); border-left: 3px solid var(--ok); border-radius: 0 6px 6px 0; }
-#out .err { color: var(--err); padding-left: 10px; border-left: 3px solid var(--err); }
-#out .warn { color: var(--warn); padding-left: 10px; border-left: 3px solid var(--warn); }
-#out .cipher { color: var(--warn); letter-spacing: .04em; padding: 4px 10px; background: rgba(255, 209, 102, .06); border-radius: 6px; }
+#out .head { color: var(--fg); font-weight: bold; margin-top: 14px; padding: 6px 10px; background: rgba(94, 234, 212, .07); border-left: 3px solid var(--fg); border-radius: 0 8px 8px 0; }
+#out .ok { color: var(--ok); font-weight: bold; padding: 3px 10px; background: rgba(110, 231, 160, .08); border-left: 3px solid var(--ok); border-radius: 0 8px 8px 0; }
+#out .ok::before { content: '\2713  '; }
+#out .err { color: var(--err); padding: 2px 10px; background: rgba(255, 123, 134, .07); border-left: 3px solid var(--err); border-radius: 0 8px 8px 0; }
+#out .err::before { content: '\2715  '; }
+#out .warn { color: var(--warn); padding: 2px 10px; background: rgba(245, 197, 97, .06); border-left: 3px solid var(--warn); border-radius: 0 8px 8px 0; }
+#out .cipher { color: var(--warn); letter-spacing: .04em; padding: 8px 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
 #out .logline { font-size: 12.5px; }
 
 /* Seitenleiste: Spielfeld und Schnellbefehle */
@@ -155,43 +167,45 @@ header {
   font: inherit;
   font-size: 14px;
   color: var(--fg);
-  background: rgba(56, 255, 122, .07);
+  background: rgba(94, 234, 212, .07);
   border: 1px solid var(--faint);
-  border-radius: 999px;
+  border-radius: 12px;
   cursor: pointer;
   touch-action: manipulation;
-  transition: background .12s;
+  transition: background .12s, transform .08s;
 }
 .chip.ghost { color: var(--dim); background: transparent; border-color: var(--line); }
-.chip:active { background: var(--faint); }
+.chip:active { background: var(--faint); transform: scale(.97); }
 .chip:disabled { color: var(--faint); cursor: not-allowed; }
 
 /* Eingabe */
 footer { background: var(--panel); border-top: 1px solid var(--line); padding: 8px 10px 10px; }
 form { display: flex; align-items: center; gap: 8px; }
-#prompt { color: var(--dim); white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+#prompt { font-family: var(--font); font-size: 14px; color: var(--dim); white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
 #in {
+  font-family: var(--font);
   flex: 1;
   min-width: 0;
-  min-height: 46px;
+  min-height: 48px;
   font: inherit;
   font-size: 16px; /* verhindert Auto-Zoom auf iOS */
   color: var(--fg);
-  background: var(--bg);
+  background: var(--surface);
   border: 1px solid var(--faint);
-  border-radius: 10px;
-  padding: 0 12px;
+  border-radius: 12px;
+  padding: 0 14px;
   caret-color: var(--fg);
 }
 #go {
-  min-height: 46px;
-  min-width: 46px;
+  min-height: 48px;
+  min-width: 48px;
   font: inherit;
+  font-size: 18px;
   font-weight: bold;
-  color: var(--bg);
+  color: #06201c;
   background: var(--fg);
   border: 0;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
   touch-action: manipulation;
 }
@@ -207,22 +221,22 @@ form { display: flex; align-items: center; gap: 8px; }
   font-size: calc(var(--cell) * .42);
   line-height: 1;
   color: var(--fg);
-  background: rgba(56, 255, 122, .04);
+  background: rgba(94, 234, 212, .04);
   border: 1px solid var(--faint);
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   touch-action: manipulation;
   white-space: pre-line;
 }
 .cell:active { background: var(--faint); }
 .cell:disabled { cursor: default; }
-.cell.on { background: var(--fg); color: var(--bg); border-color: var(--fg); box-shadow: 0 0 10px rgba(56, 255, 122, .45); }
-.cell.given { color: var(--dim); background: rgba(56, 255, 122, .12); font-weight: bold; }
+.cell.on { background: var(--fg); color: #06201c; border-color: var(--fg); box-shadow: 0 0 12px rgba(94, 234, 212, .4); }
+.cell.given { color: var(--dim); background: rgba(94, 234, 212, .12); font-weight: bold; }
 .cell.sel { outline: 2px solid var(--info); outline-offset: 1px; }
 .cell.hid { background: var(--faint); }
 .cell.flag { background: var(--warn); color: var(--bg); }
 .cell.clue { border-color: transparent; background: transparent; color: var(--dim); font-size: calc(var(--cell) * .3); }
-.cell.clue.num { font-size: calc(var(--cell) * .5); font-weight: bold; color: var(--text); background: rgba(56, 255, 122, .06); border-color: var(--line); }
+.cell.clue.num { font-size: calc(var(--cell) * .5); font-weight: bold; color: var(--text); background: rgba(94, 234, 212, .06); border-color: var(--line); }
 .cell.bR { margin-right: 4px; }
 .cell.bB { margin-bottom: 4px; }
 .cell.mode { width: auto; min-width: 96px; padding: 0 12px; height: 40px; font-size: 14px; border-radius: 999px; }
@@ -233,14 +247,42 @@ form { display: flex; align-items: center; gap: 8px; }
 
 /* Levelauswahl */
 .menuwrap { max-width: 440px; }
-.cont { width: 100%; min-height: 48px; padding: 0 14px; font: inherit; font-size: 15px; font-weight: bold; color: var(--bg); background: var(--fg); border: 0; border-radius: 12px; cursor: pointer; touch-action: manipulation; box-shadow: 0 0 14px rgba(56, 255, 122, .35); }
+.cont { width: 100%; min-height: 50px; padding: 0 16px; font: inherit; font-size: 15px; font-weight: 700; color: #06201c; background: linear-gradient(180deg, #7ff0de, #4fd6c2); border: 0; border-radius: 14px; cursor: pointer; touch-action: manipulation; box-shadow: 0 6px 18px rgba(94, 234, 212, .25); }
 .cont:active { filter: brightness(.85); }
+.cont:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 .tiles { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; width: 100%; }
 .cell.tile { width: auto; height: auto; aspect-ratio: 1; font-size: 11px; border-radius: 6px; }
-.cell.tile.done { color: var(--ok); background: rgba(185, 255, 102, .14); border-color: rgba(185, 255, 102, .4); }
-.cell.tile.next { color: var(--fg); font-weight: bold; border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg), 0 0 10px rgba(56, 255, 122, .5); }
+.cell.tile.done { color: var(--ok); background: rgba(110, 231, 160, .14); border-color: rgba(110, 231, 160, .4); }
+.cell.tile.next { color: var(--fg); font-weight: bold; border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg), 0 0 10px rgba(94, 234, 212, .5); }
 .cell.tile.lock { color: var(--faint); border-color: var(--line); background: transparent; }
 .cap { font-size: 12px; color: var(--dim); text-align: center; }
+
+/* Missionskarte */
+#out .card { white-space: normal; margin: 16px 0 8px; padding: 14px 16px 12px; font-family: var(--ui); background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--faint); border-radius: 16px; box-shadow: 0 8px 28px rgba(0, 0, 0, .35); }
+#out .card div { white-space: pre-line; min-height: 0; }
+#out .card .kicker { font-size: 11px; letter-spacing: .16em; font-weight: 700; color: var(--fg); }
+#out .card .ttl { font-size: 21px; line-height: 1.25; font-weight: 800; color: #fff; margin: 2px 0 8px; }
+#out .card .story { font-size: 14.5px; line-height: 1.55; color: var(--text); }
+#out .card details { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--dim); }
+#out .card summary { cursor: pointer; color: var(--fg); font-weight: 600; list-style: none; padding: 4px 0; }
+#out .card summary::-webkit-details-marker { display: none; }
+#out .card summary::before { content: '\25B8  '; }
+#out .card details[open] summary::before { content: '\25BE  '; }
+#out .card .cmds { margin-top: 4px; font-family: var(--font); line-height: 1.5; }
+
+/* Erfolgsmeldung */
+#win { position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(6, 9, 14, .72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.winbox { width: min(360px, 100%); text-align: center; padding: 24px 20px 20px; font-family: var(--ui); background: linear-gradient(180deg, var(--surface-2), var(--surface)); border: 1px solid var(--faint); border-radius: 22px; box-shadow: 0 20px 60px rgba(0, 0, 0, .55); animation: pop .35s cubic-bezier(.2, .9, .3, 1.2); }
+.winbox h2 { margin: 10px 0 2px; font-size: 22px; font-weight: 800; color: #fff; }
+.winbox p { margin: 0 0 16px; font-size: 14px; color: var(--dim); }
+.winbox .check { width: 72px; height: 72px; }
+.winbox .check circle { fill: rgba(110, 231, 160, .12); stroke: var(--ok); stroke-width: 2; }
+.winbox .check path { fill: none; stroke: var(--ok); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 40; stroke-dashoffset: 40; animation: draw .5s .15s ease forwards; }
+.winbtns { display: flex; flex-direction: column; gap: 8px; }
+.winbtns .chip { width: 100%; }
+@keyframes pop { from { transform: scale(.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes draw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .winbox, .winbox .check path { animation: none; stroke-dashoffset: 0; } }
 
 @media (max-height: 680px) {
   #panel { --cell: clamp(30px, 9.5vw, 40px); padding: 6px 10px; }
@@ -256,6 +298,7 @@ form { display: flex; align-items: center; gap: 8px; }
   #out { grid-column: 1; grid-row: 3; min-height: 0; }
   #side { grid-column: 2; grid-row: 3; max-height: none; min-height: 0; overflow: hidden; border-top: 0; border-left: 1px solid var(--line); }
   #chips { order: -1; padding: 6px 8px; gap: 6px; }
+  #panel[hidden] + #chips { flex-wrap: wrap; overflow: visible; }
   .chip { min-height: 36px; padding: 0 12px; font-size: 13px; }
   #panel { --cell: 30px; flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; padding: 4px 8px; }
   .cell.mode { height: 30px; }
@@ -272,7 +315,7 @@ form { display: flex; align-items: center; gap: 8px; }
 </head>
 <body>
 <header>
-  <span class="logo">GHOST//SHELL</span>
+  <span class="logo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="1" y="1" width="22" height="22" rx="6" fill="#121b29" stroke="#5eead4" stroke-width="1.5"/><path d="M6 8l5 4-5 4" fill="none" stroke="#5eead4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 16h5" stroke="#d6e2f0" stroke-width="2" stroke-linecap="round"/></svg><span>GHOST<i>//SHELL</i></span></span>
   <span class="progress" id="progress" aria-label="Fortschritt"></span>
   <button id="snd" class="sndbtn" type="button" aria-pressed="true" aria-label="Sound ein- oder ausschalten">&#9835; AN</button>
   <div id="bar" aria-hidden="true"><i></i></div>
@@ -292,6 +335,14 @@ form { display: flex; align-items: center; gap: 8px; }
     <button id="go" type="submit" aria-label="Senden">&#9166;</button>
   </form>
 </footer>
+<div id="win" hidden>
+  <div class="winbox" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+    <svg class="check" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="26" r="24"/><path d="M14 27l8 8 16-17"/></svg>
+    <h2 id="winTitle"></h2>
+    <p id="winSub"></p>
+    <div class="winbtns"><button id="winNext" class="cont" type="button"></button><button id="winMenu" class="chip ghost" type="button">Zur Übersicht</button></div>
+  </div>
+</div>
 
 <script>
 (function () {
@@ -2889,14 +2940,14 @@ form { display: flex; align-items: center; gap: 8px; }
   }
 
   var sfx = {
-    key: function () { if (throttled('key', 40)) { tone(1500 + Math.random() * 300, 0.025, 'square', 0.02); } },
-    enter: function () { tone(520, 0.05, 'square', 0.035); tone(780, 0.05, 'square', 0.03, 0.05); },
-    err: function () { if (throttled('err', 250)) { tone(170, 0.14, 'sawtooth', 0.05); tone(120, 0.2, 'sawtooth', 0.05, 0.13); } },
-    level: function () { tone(330, 0.08, 'triangle', 0.05); tone(495, 0.1, 'triangle', 0.05, 0.08); },
-    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.16, 'square', 0.045, i * 0.09); }); },
+    key: function () { if (throttled('key', 40)) { tone(1100 + Math.random() * 200, 0.03, 'sine', 0.014); } },
+    enter: function () { tone(440, 0.07, 'triangle', 0.03); tone(660, 0.09, 'triangle', 0.025, 0.05); },
+    err: function () { if (throttled('err', 250)) { tone(196, 0.16, 'triangle', 0.05); tone(147, 0.24, 'triangle', 0.05, 0.12); } },
+    level: function () { tone(392, 0.1, 'sine', 0.035); tone(587, 0.14, 'sine', 0.03, 0.08); },
+    win: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0.28, 'triangle', 0.05, i * 0.1); tone(f * 2, 0.2, 'sine', 0.012, i * 0.1); }); },
     fin: function () {
-      [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, 0.22, 'square', 0.05, i * 0.11); });
-      tone(262, 0.9, 'triangle', 0.06, 0);
+      [523, 659, 784, 1047, 784, 1047, 1319].forEach(function (f, i) { tone(f, 0.3, 'triangle', 0.055, i * 0.12); tone(f * 2, 0.22, 'sine', 0.014, i * 0.12); });
+      tone(262, 1.1, 'sine', 0.06, 0);
     }
   };
 
@@ -2951,7 +3002,50 @@ form { display: flex; align-items: center; gap: 8px; }
     if (onTap) { b.addEventListener('click', onTap); } else { b.disabled = true; }
     return b;
   }
-  function tap(cmd) { sfx.key(); run(cmd, true); }
+  function buzz(p) { try { if (audio.on && navigator.vibrate) { navigator.vibrate(p); } } catch (e) { /* nicht unterstützt */ } }
+  function tap(cmd) { sfx.key(); buzz(8); run(cmd, true); }
+
+  var winEl = document.getElementById('win'), winToken = 0;
+  function hideWin() { winToken++; winEl.hidden = true; }
+  function showWin(n) {
+    var token = ++winToken;
+    setTimeout(function () {
+      if (token !== winToken) { return; }
+      var last = n >= LEVEL_COUNT, done = state.solved.filter(Boolean).length;
+      document.getElementById('winTitle').textContent = last ? 'Alles geschafft!' : 'Level ' + n + ' geschafft';
+      document.getElementById('winSub').textContent = TITLES[n] + ' \u00b7 ' + done + ' von ' + LEVEL_COUNT + ' gelöst';
+      var nextBtn = document.getElementById('winNext');
+      nextBtn.textContent = last ? 'Zur Übersicht' : 'Weiter: Level ' + (n + 1) + ' \u00b7 ' + TITLES[n + 1];
+      nextBtn.onclick = function () { hideWin(); if (last) { return; } tap('level ' + (n + 1)); };
+      winEl.hidden = false;
+      nextBtn.focus();
+      buzz([20, 50, 20]);
+    }, 650);
+  }
+  document.getElementById('winMenu').addEventListener('click', hideWin);
+  winEl.addEventListener('click', function (e) { if (e.target === winEl) { hideWin(); } });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !winEl.hidden) { hideWin(); } });
+
+  function printNode(node) { queue.push({ node: node }); if (!pumping) { pumping = true; step(); } }
+  function printCard(n, lines) {
+    var cut = lines.length;
+    for (var i = 0; i < lines.length; i++) { if (lines[i].indexOf('Befehle:') === 0) { cut = i; break; } }
+    var story = lines.slice(0, cut).join('\n').replace(/\n+$/, '');
+    var cmds = lines.slice(cut).join('\n');
+    var card = document.createElement('div');
+    card.className = 'card';
+    var k = document.createElement('div'); k.className = 'kicker'; k.textContent = 'MISSION ' + n;
+    var t = document.createElement('div'); t.className = 'ttl'; t.textContent = TITLES[n];
+    var st = document.createElement('div'); st.className = 'story'; st.textContent = story;
+    card.appendChild(k); card.appendChild(t); card.appendChild(st);
+    if (cmds) {
+      var d = document.createElement('details');
+      var sm = document.createElement('summary'); sm.textContent = 'Befehle anzeigen';
+      var c = document.createElement('div'); c.className = 'cmds'; c.textContent = cmds;
+      d.appendChild(sm); d.appendChild(c); card.appendChild(d);
+    }
+    printNode(card);
+  }
 
   var GOALS = {
     1: 'Finde das Passwort von mfalke in den Dateien.', 2: 'Knacke die Caesar-Chiffre und nenne das Codewort.', 3: 'Finde in der Logdatei die IP-Adresse des Eindringlings.',
@@ -3020,6 +3114,13 @@ form { display: flex; align-items: center; gap: 8px; }
   function step() {
     var item = queue.shift();
     if (!item) { pumping = false; return; }
+    if (item.node) {
+      out.appendChild(item.node);
+      out.scrollTop = out.scrollHeight;
+      sfx.level();
+      if (LINE_DELAY) { setTimeout(step, LINE_DELAY); } else { step(); }
+      return;
+    }
     var div = document.createElement('div');
     if (item.cls) { div.className = item.cls; }
     div.textContent = item.text;
@@ -3199,6 +3300,7 @@ form { display: flex; align-items: center; gap: 8px; }
   /* ---------- Menü & globale Befehle ---------- */
 
   function showMenu(all) {
+    hideWin();
     state.level = 0;
     menuSig = '';
     refresh();
@@ -3281,10 +3383,9 @@ form { display: flex; align-items: center; gap: 8px; }
     if (EXTRA[n] && EXTRA[n].start) { EXTRA[n].start(); }
     state.level = n;
     refresh();
-    print('');
-    print('=== MISSION ' + n + ': ' + TITLES[n].toUpperCase() + ' ===', 'head');
+    hideWin();
     if (EXTRA[n]) {
-      printAll(EXTRA[n].intro);
+      printCard(n, EXTRA[n].intro);
       if (n === 8) { print(''); print(vigenere(L8_PLAIN, L8_KEY, 1), 'cipher'); }
       if (n === 9) { print(''); print(morseText(), 'cipher'); }
       if (n === 13) { print(''); print(t9Encode(L13_PLAIN), 'cipher'); }
@@ -3293,14 +3394,14 @@ form { display: flex; align-items: center; gap: 8px; }
       if (EXTRA[n].panel) { setPanel(EXTRA[n].panel()); }
       if (EXTRA[n].after) { EXTRA[n].after(); }
     } else if (n === 1) {
-      printAll([
+      printCard(n, [
         'Ziel: Server NEBULA-7 (frei erfunden).',
         'Das Konto "mfalke" ist passwortgeschützt. Finde heraus, wie das Passwort lautet.',
         '',
         'Befehle: dateien, lies <datei>, login <passwort>, hinweis'
       ]);
     } else if (n === 2) {
-      printAll([
+      printCard(n, [
         'Du hast einen verschlüsselten Funkspruch abgefangen.',
         'Er wurde mit einer Caesar-Chiffre verschlüsselt. Finde die Verschiebung und das Codewort.',
         '',
@@ -3309,35 +3410,35 @@ form { display: flex; align-items: center; gap: 8px; }
       print('');
       print(cipherText(), 'cipher');
     } else if (n === 3) {
-      printAll([
+      printCard(n, [
         'Auf dem Gateway wurde etwas gestohlen. Die Logdatei (heute) liegt vor.',
         'Finde die IP-Adresse des Eindringlings.',
         '',
         'Befehle: log, suche <begriff>, taeter <ip>, hinweis'
       ]);
     } else if (n === 4) {
-      printAll([
+      printCard(n, [
         'Im Datendepot liegt ein Datenpaket. Es sieht aus wie wirres Zeug, ist aber Base64-kodiert.',
         'Wandle es zurück und finde das Schlüsselwort.',
         '',
         'Befehle: dump, base64 [text], schluessel <wort>, hinweis'
       ]);
     } else if (n === 5) {
-      printAll([
+      printCard(n, [
         'Ein Türsteuerungs-Signal wurde mitgeschnitten: nur Nullen und Einsen.',
         'Jede Gruppe aus 8 Bits ist ein Zeichen. Finde die PIN.',
         '',
         'Tipp: "bin" wandelt das ganze Signal in Text um. "byte <n>" erklärt ein einzelnes Zeichen.', 'Befehle: signal, bin, byte <n>, pin <zahl>, hinweis'
       ]);
     } else if (n === 6) {
-      printAll([
+      printCard(n, [
         'Du prüfst ein (frei erfundenes) Firmennetz als Sicherheitsberater.',
         'Finde den Rechner, der am dringendsten abgesichert werden muss.',
         '',
         'Befehle: scan, info <host>, ziel <host>, hinweis'
       ]);
     } else {
-      printAll([
+      printCard(n, [
         'Ein Tresor, geschützt durch drei Teile, jeder anders verschleiert.',
         'Entschlüssele alle drei und öffne den Tresor.',
         '',
@@ -3365,6 +3466,7 @@ form { display: flex; align-items: center; gap: 8px; }
       state.level = 0;
       refresh();
       print('Weiter mit "level ' + (n + 1) + '".', 'dim');
+      showWin(n);
     } else {
       state.level = 0;
       refresh();
@@ -3375,6 +3477,7 @@ form { display: flex; align-items: center; gap: 8px; }
         'Alles hier war frei erfunden. Nutze dein Wissen nur legal und verantwortungsvoll.'
       ], 'ok');
       print('Tippe "level 1" zum erneuten Spielen oder "reset" für einen frischen Start.', 'dim');
+      showWin(n);
     }
   }
 
