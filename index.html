@@ -12,10 +12,12 @@
 <style>
 :root {
   --bg: #050805;
-  --panel: #0a110b;
+  --panel: #09110b;
   --fg: #38ff7a;
+  --text: #c6f2d2;
   --dim: #6fbf8a;
-  --faint: #2b5a3b;
+  --faint: #24523a;
+  --line: #1a3a29;
   --err: #ff6b6b;
   --warn: #ffd166;
   --info: #6bd6ff;
@@ -25,11 +27,11 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 body {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--bg) radial-gradient(120% 60% at 50% 0%, #0e2014 0%, rgba(5, 8, 5, 0) 70%) no-repeat;
+  color: var(--text);
   font-family: var(--font);
   font-size: 15px;
-  line-height: 1.45;
+  line-height: 1.5;
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -38,25 +40,23 @@ body {
   overflow: hidden;
   -webkit-text-size-adjust: 100%;
 }
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.18) 3px);
-}
+[hidden] { display: none !important; }
+
+/* Kopfzeile */
 header {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 8px 14px;
   background: var(--panel);
-  border-bottom: 1px solid var(--faint);
+  border-bottom: 1px solid var(--line);
   font-size: 13px;
 }
-.logo { font-weight: bold; letter-spacing: .08em; text-shadow: 0 0 8px rgba(56,255,122,.6); }
+.logo { font-weight: bold; letter-spacing: .1em; color: var(--fg); text-shadow: 0 0 10px rgba(56, 255, 122, .55); }
 .progress { color: var(--dim); white-space: nowrap; margin-left: auto; }
+#bar { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; }
+#bar i { display: block; height: 100%; width: 0; background: var(--fg); box-shadow: 0 0 8px rgba(56, 255, 122, .7); transition: width .4s ease; }
 .sndbtn {
   min-height: 40px;
   padding: 0 12px;
@@ -64,23 +64,25 @@ header {
   font-size: 13px;
   color: var(--fg);
   background: transparent;
-  border: 1px solid var(--faint);
-  border-radius: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
   cursor: pointer;
   touch-action: manipulation;
 }
 .sndbtn[aria-pressed="false"] { color: var(--dim); }
-.sndbtn:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
+.sndbtn:focus-visible, .goal:focus-visible, .chip:focus-visible, .cell:focus-visible, #in:focus-visible, #go:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
+
+/* Zielzeile */
 .goal {
   display: block;
   width: 100%;
   text-align: left;
   font: inherit;
   font-size: 13px;
-  color: var(--dim);
-  background: var(--bg);
+  color: var(--text);
+  background: rgba(56, 255, 122, .05);
   border: 0;
-  border-bottom: 1px solid var(--faint);
+  border-bottom: 1px solid var(--line);
   padding: 7px 14px;
   white-space: nowrap;
   overflow: hidden;
@@ -90,24 +92,111 @@ header {
 }
 .goal.open { white-space: normal; }
 .goal .lv { color: var(--fg); font-weight: bold; }
-.goal:focus-visible { outline: 2px solid var(--info); outline-offset: -2px; }
-[hidden] { display: none !important; }
-#panel {
+
+/* Terminal-Ausgabe */
+#out {
+  flex: 1;
+  min-height: 72px;
+  overflow-y: auto;
+  padding: 6px 14px 14px;
+  color: var(--text);
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+#out div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.5em; }
+#out .cmd { color: var(--dim); margin-top: 12px; font-size: .92em; }
+#out .dim { color: var(--dim); }
+#out .info { color: var(--info); }
+#out .head { color: var(--fg); font-weight: bold; margin-top: 14px; padding: 6px 10px; background: rgba(56, 255, 122, .07); border-left: 3px solid var(--fg); border-radius: 0 6px 6px 0; }
+#out .ok { color: var(--ok); font-weight: bold; padding: 2px 10px; background: rgba(185, 255, 102, .08); border-left: 3px solid var(--ok); border-radius: 0 6px 6px 0; }
+#out .err { color: var(--err); padding-left: 10px; border-left: 3px solid var(--err); }
+#out .warn { color: var(--warn); padding-left: 10px; border-left: 3px solid var(--warn); }
+#out .cipher { color: var(--warn); letter-spacing: .04em; padding: 4px 10px; background: rgba(255, 209, 102, .06); border-radius: 6px; }
+#out .logline { font-size: 12.5px; }
+
+/* Seitenleiste: Spielfeld und Schnellbefehle */
+#side {
+  display: flex;
+  flex-direction: column;
   flex: 0 1 auto;
   min-height: 0;
-  --cell: clamp(34px, 11.5vw, 54px);
+  max-height: 62vh;
+  max-height: 62dvh;
   background: var(--panel);
-  border-top: 1px solid var(--faint);
-  padding: 8px 10px;
+  border-top: 1px solid var(--line);
+}
+#panel {
+  --cell: clamp(34px, 11.5vw, 54px);
+  flex: 0 1 auto;
+  min-height: 0;
   max-height: 46vh;
   max-height: 46dvh;
   overflow: auto;
+  padding: 8px 10px;
   display: flex;
   justify-content: center;
 }
-@media (max-height: 680px) { #panel { --cell: clamp(30px, 9.5vw, 40px); padding: 6px 10px; } .cell.mode { height: 34px; } .cell.pad { height: 38px; } }
-#panel .wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+#panel .wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; }
 #panel .row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+#chips {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 10px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: rgba(56, 255, 122, .07);
+  border: 1px solid var(--faint);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background .12s;
+}
+.chip.ghost { color: var(--dim); background: transparent; border-color: var(--line); }
+.chip:active { background: var(--faint); }
+.chip:disabled { color: var(--faint); cursor: not-allowed; }
+
+/* Eingabe */
+footer { background: var(--panel); border-top: 1px solid var(--line); padding: 8px 10px 10px; }
+form { display: flex; align-items: center; gap: 8px; }
+#prompt { color: var(--dim); white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
+#in {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  font: inherit;
+  font-size: 16px; /* verhindert Auto-Zoom auf iOS */
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--faint);
+  border-radius: 10px;
+  padding: 0 12px;
+  caret-color: var(--fg);
+}
+#go {
+  min-height: 46px;
+  min-width: 46px;
+  font: inherit;
+  font-weight: bold;
+  color: var(--bg);
+  background: var(--fg);
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Spielfelder */
 .grid { display: grid; gap: 4px; }
 .cell {
   width: var(--cell);
@@ -118,121 +207,63 @@ header {
   font-size: calc(var(--cell) * .42);
   line-height: 1;
   color: var(--fg);
-  background: transparent;
+  background: rgba(56, 255, 122, .04);
   border: 1px solid var(--faint);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   touch-action: manipulation;
   white-space: pre-line;
 }
 .cell:active { background: var(--faint); }
-.cell.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
-.cell.given { color: var(--dim); background: rgba(56, 255, 122, .1); font-weight: bold; }
+.cell:disabled { cursor: default; }
+.cell.on { background: var(--fg); color: var(--bg); border-color: var(--fg); box-shadow: 0 0 10px rgba(56, 255, 122, .45); }
+.cell.given { color: var(--dim); background: rgba(56, 255, 122, .12); font-weight: bold; }
 .cell.sel { outline: 2px solid var(--info); outline-offset: 1px; }
 .cell.hid { background: var(--faint); }
 .cell.flag { background: var(--warn); color: var(--bg); }
-.cell.clue { border-color: transparent; color: var(--dim); font-size: calc(var(--cell) * .3); cursor: default; }
+.cell.clue { border-color: transparent; background: transparent; color: var(--dim); font-size: calc(var(--cell) * .3); }
+.cell.clue.num { font-size: calc(var(--cell) * .5); font-weight: bold; color: var(--text); background: rgba(56, 255, 122, .06); border-color: var(--line); }
 .cell.bR { margin-right: 4px; }
 .cell.bB { margin-bottom: 4px; }
-.cell.bad { color: var(--err); }
-.cell.mode { width: auto; min-width: 96px; padding: 0 10px; height: 40px; font-size: 14px; }
+.cell.mode { width: auto; min-width: 96px; padding: 0 12px; height: 40px; font-size: 14px; border-radius: 999px; }
 .cell.mode.active { background: var(--fg); color: var(--bg); }
 .cell.pad { height: 44px; }
 .cell.arrow { font-size: 20px; }
 .mazemap { margin: 0; font: inherit; font-size: 11px; line-height: 11px; color: var(--fg); white-space: pre; }
-@media (max-height: 480px) {
-  body.panelOn #chips { display: none; }
-  body.panelOn #out { min-height: 40px; }
-  #panel { --cell: 32px; padding: 4px 10px; max-height: 62vh; max-height: 62dvh; }
-  .cell.mode { height: 30px; }
-  .cell.pad { height: 32px; }
-  header { padding: 4px 14px; }
-  .goal { padding: 4px 14px; }
+
+/* Levelauswahl */
+.menuwrap { max-width: 440px; }
+.cont { width: 100%; min-height: 48px; padding: 0 14px; font: inherit; font-size: 15px; font-weight: bold; color: var(--bg); background: var(--fg); border: 0; border-radius: 12px; cursor: pointer; touch-action: manipulation; box-shadow: 0 0 14px rgba(56, 255, 122, .35); }
+.cont:active { filter: brightness(.85); }
+.tiles { display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; width: 100%; }
+.cell.tile { width: auto; height: auto; aspect-ratio: 1; font-size: 11px; border-radius: 6px; }
+.cell.tile.done { color: var(--ok); background: rgba(185, 255, 102, .14); border-color: rgba(185, 255, 102, .4); }
+.cell.tile.next { color: var(--fg); font-weight: bold; border-color: var(--fg); box-shadow: 0 0 0 1px var(--fg), 0 0 10px rgba(56, 255, 122, .5); }
+.cell.tile.lock { color: var(--faint); border-color: var(--line); background: transparent; }
+.cap { font-size: 12px; color: var(--dim); text-align: center; }
+
+@media (max-height: 680px) {
+  #panel { --cell: clamp(30px, 9.5vw, 40px); padding: 6px 10px; }
+  .cell.mode { height: 34px; }
+  .cell.pad { height: 38px; }
 }
-#out {
-  min-height: 72px;
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 14px;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+/* Querformat auf dem Handy: Text links, Spielfeld und Knöpfe rechts */
+@media (orientation: landscape) and (max-height: 540px) {
+  body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 42%); grid-template-rows: auto auto minmax(0, 1fr) auto; }
+  header { grid-column: 1 / -1; grid-row: 1; padding: 4px 14px; }
+  .goal { grid-column: 1 / -1; grid-row: 2; padding: 4px 14px; font-size: 12px; }
+  #out { grid-column: 1; grid-row: 3; min-height: 0; }
+  #side { grid-column: 2; grid-row: 3; max-height: none; min-height: 0; overflow: auto; border-top: 0; border-left: 1px solid var(--line); }
+  #panel { --cell: 34px; padding: 6px 8px; max-height: none; overflow: visible; flex: 0 0 auto; }
+  #chips { flex-wrap: wrap; overflow: visible; }
+  .chip { min-height: 40px; padding: 0 12px; }
+  footer { grid-column: 1 / -1; grid-row: 4; padding: 6px 10px 8px; }
+  #in, #go { min-height: 42px; }
 }
-#out div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.45em; }
-.cmd  { color: var(--dim); }
-.dim  { color: var(--dim); }
-.err  { color: var(--err); }
-.warn { color: var(--warn); }
-.info { color: var(--info); }
-.ok   { color: var(--ok); font-weight: bold; }
-.head { color: var(--fg); font-weight: bold; text-shadow: 0 0 8px rgba(56,255,122,.5); }
-.logline { font-size: 12.5px; }
-.cipher { color: var(--warn); letter-spacing: .04em; }
-footer {
-  background: var(--panel);
-  border-top: 1px solid var(--faint);
-  padding: 8px 10px 10px;
-}
-#chips {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-#chips::-webkit-scrollbar { display: none; }
-.chip {
-  flex: 0 0 auto;
-  min-height: 44px;
-  padding: 0 14px;
-  font: inherit;
-  font-size: 14px;
-  color: var(--fg);
-  background: transparent;
-  border: 1px solid var(--faint);
-  border-radius: 6px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-.chip:active { background: var(--faint); }
-.chip:disabled { color: var(--faint); cursor: not-allowed; }
-.chip:focus-visible, #in:focus-visible, #go:focus-visible { outline: 2px solid var(--info); outline-offset: 1px; }
-form { display: flex; align-items: center; gap: 8px; }
-#prompt { color: var(--dim); white-space: nowrap; max-width: 45%; overflow: hidden; text-overflow: ellipsis; }
-#in {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  font: inherit;
-  font-size: 16px; /* verhindert Auto-Zoom auf iOS */
-  color: var(--fg);
-  background: var(--bg);
-  border: 1px solid var(--faint);
-  border-radius: 6px;
-  padding: 0 10px;
-  caret-color: var(--fg);
-}
-#go {
-  min-height: 44px;
-  min-width: 44px;
-  font: inherit;
-  font-weight: bold;
-  color: var(--bg);
-  background: var(--fg);
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-@media (prefers-reduced-motion: no-preference) {
-  .head { animation: glow 3s ease-in-out infinite alternate; }
-  @keyframes glow { from { text-shadow: 0 0 4px rgba(56,255,122,.3); } to { text-shadow: 0 0 10px rgba(56,255,122,.7); } }
-}
-@media (min-width: 700px) {
+@media (min-width: 700px) and (min-height: 541px) {
   body { font-size: 16px; }
-  #out, header, footer { width: min(900px, 100%); margin: 0 auto; }
-  header { border-left: 1px solid var(--faint); border-right: 1px solid var(--faint); }
-  footer { border-left: 1px solid var(--faint); border-right: 1px solid var(--faint); }
+  header, .goal, #out, #side, footer { width: min(900px, 100%); margin-left: auto; margin-right: auto; }
+  header, #side, footer { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 }
 </style>
 </head>
@@ -241,12 +272,15 @@ form { display: flex; align-items: center; gap: 8px; }
   <span class="logo">GHOST//SHELL</span>
   <span class="progress" id="progress" aria-label="Fortschritt"></span>
   <button id="snd" class="sndbtn" type="button" aria-pressed="true" aria-label="Sound ein- oder ausschalten">&#9835; AN</button>
+  <div id="bar" aria-hidden="true"><i></i></div>
 </header>
 <button id="goal" class="goal" type="button" hidden aria-expanded="false" aria-label="Ziel des Levels, tippen zum Aufklappen"></button>
 <main id="out" role="log" aria-live="polite" aria-label="Terminal-Ausgabe"></main>
-<div id="panel" hidden></div>
-<footer>
+<aside id="side">
+  <div id="panel" hidden></div>
   <div id="chips" aria-label="Schnellbefehle"></div>
+</aside>
+<footer>
   <form id="form" autocomplete="off">
     <span id="prompt" aria-hidden="true">$</span>
     <input id="in" type="text" inputmode="text" enterkeyhint="send"
@@ -2321,7 +2355,7 @@ form { display: flex; align-items: center; gap: 8px; }
       for (var c = 0; c < 6; c++) {
         (function (r, c) {
           var k = r + ',' + c, ch = MINES[r].charAt(c);
-          if (mine.shown[k]) { grid.appendChild(cellBtn(ch === '0' ? '' : ch, 'clue', null, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (ch === '0' ? 'keine Mine in der Nähe' : ch + ' Minen in der Nähe'))); }
+          if (mine.shown[k]) { grid.appendChild(cellBtn(ch === '0' ? '' : ch, 'clue num', null, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (ch === '0' ? 'keine Mine in der Nähe' : ch + ' Minen in der Nähe'))); }
           else { grid.appendChild(cellBtn(mine.flag[k] ? 'F' : '', mine.flag[k] ? 'flag' : 'hid', function () { tap(mineMode + ' ' + (r + 1) + ' ' + (c + 1)); }, 'Zeile ' + (r + 1) + ', Spalte ' + (c + 1) + ': ' + (mine.flag[k] ? 'Flagge' : 'verdeckt'))); }
         })(r, c);
       }
@@ -3005,7 +3039,9 @@ form { display: flex; align-items: center; gap: 8px; }
   function renderStatus() {
     var host = hostName();
     promptEl.textContent = host.indexOf(':') === -1 ? host + ':~$' : host + '$';
-    progressEl.textContent = state.solved.filter(Boolean).length + '/' + LEVEL_COUNT + ' gelöst';
+    var doneN = state.solved.filter(Boolean).length;
+    progressEl.textContent = doneN + '/' + LEVEL_COUNT + ' gelöst';
+    document.querySelector('#bar i').style.width = Math.round(doneN * 100 / LEVEL_COUNT) + '%';
   }
 
   function chipList() {
@@ -3013,12 +3049,10 @@ form { display: flex; align-items: center; gap: 8px; }
     if (state.level === 0) {
       var next = s.indexOf(false) + 1;
       return [
-        { c: 'level ' + (next || 1) },
-        { c: 'level ', fill: true },
         { c: 'status' },
+        { c: 'hilfe' },
         { c: 'export' },
-        { c: 'import ', fill: true },
-        { c: 'hilfe' }
+        { c: 'import ', fill: true }
       ];
     }
     var base;
@@ -3058,7 +3092,7 @@ form { display: flex; align-items: center; gap: 8px; }
     chipList().forEach(function (chip) {
       var b = document.createElement('button');
       b.type = 'button';
-      b.className = 'chip';
+      b.className = 'chip' + (/^(hinweis|menu|hilfe|status|neu|export|import|text|tipp|brett|karte|zustand)$/.test(chip.c.trim().split(' ')[0]) ? ' ghost' : '');
       b.textContent = chip.c.trim() + (chip.fill ? ' …' : '');
       b.disabled = !!chip.off;
       b.addEventListener('mousedown', function (e) { e.preventDefault(); }); // Fokus/Tastatur behalten
@@ -3074,7 +3108,40 @@ form { display: flex; align-items: center; gap: 8px; }
     });
   }
 
-  function refresh() { renderStatus(); renderChips(); renderGoal(); }
+  var menuSig = '';
+  function buildMenuPanel() {
+    var wrap = document.createElement('div');
+    wrap.className = 'wrap menuwrap';
+    var next = state.solved.indexOf(false);
+    var cont = document.createElement('button');
+    cont.type = 'button';
+    cont.className = 'cont';
+    cont.textContent = next === -1 ? '\u25b6 Alles geschafft! Level 1 nochmal spielen' : '\u25b6 Weiter: Level ' + (next + 1) + ' \u00b7 ' + TITLES[next + 1];
+    cont.addEventListener('click', function () { tap('level ' + (next === -1 ? 1 : next + 1)); });
+    wrap.appendChild(cont);
+    var tiles = document.createElement('div');
+    tiles.className = 'tiles';
+    for (var i = 1; i <= LEVEL_COUNT; i++) {
+      (function (n) {
+        var done = state.solved[n - 1], open = n === 1 || state.solved[n - 2];
+        var cls = 'tile ' + (done ? 'done' : (n === next + 1 ? 'next' : (open ? '' : 'lock')));
+        tiles.appendChild(cellBtn(String(n), cls.trim(), open ? function () { tap('level ' + n); } : null, 'Level ' + n + ': ' + TITLES[n] + (done ? ', gelöst' : (open ? ', offen' : ', gesperrt'))));
+      })(i);
+    }
+    wrap.appendChild(tiles);
+    var cap = document.createElement('div');
+    cap.className = 'cap';
+    cap.textContent = state.solved.filter(Boolean).length + ' von ' + LEVEL_COUNT + ' gelöst \u00b7 tippe ein Level';
+    wrap.appendChild(cap);
+    return wrap;
+  }
+  function ensureMenuPanel() {
+    var sig = state.solved.join('');
+    if (panelEl.firstChild && panelEl.firstChild.className.indexOf('menuwrap') !== -1 && sig === menuSig) { return; }
+    menuSig = sig;
+    setPanel(buildMenuPanel());
+  }
+  function refresh() { renderStatus(); renderChips(); renderGoal(); if (state.level === 0) { ensureMenuPanel(); } }
 
   /* ---------- Hilfsfunktionen ---------- */
 
@@ -3130,7 +3197,7 @@ form { display: flex; align-items: center; gap: 8px; }
 
   function showMenu(all) {
     state.level = 0;
-    setPanel(null);
+    menuSig = '';
     refresh();
     var first = state.solved.indexOf(false);
     var center = first === -1 ? LEVEL_COUNT - 1 : first;
@@ -3139,15 +3206,15 @@ form { display: flex; align-items: center; gap: 8px; }
     print('');
     print('=== MISSIONEN ===', 'head');
     print('Gelöst: ' + state.solved.filter(Boolean).length + '/' + LEVEL_COUNT, 'dim');
-    if (from > 0) { print('... (' + from + ' frühere Level, alle mit "menu alle")', 'dim'); }
-    for (var i = from + 1; i <= to + 1; i++) {
+    if (all && from > 0) { print('... (' + from + ' frühere Level, alle mit "menu alle")', 'dim'); }
+    for (var i = from + 1; all && i <= to + 1; i++) {
       var open = i === 1 || state.solved[i - 2];
       var tag = state.solved[i - 1] ? 'GELÖST' : (open ? 'OFFEN' : 'GESPERRT');
       print('[' + i + '] ' + TITLES[i] + ' ... ' + tag, state.solved[i - 1] ? 'ok' : (open ? '' : 'dim'));
     }
-    if (to < LEVEL_COUNT - 1) { print('... (' + (LEVEL_COUNT - 1 - to) + ' weitere Level)', 'dim'); }
+    if (all && to < LEVEL_COUNT - 1) { print('... (' + (LEVEL_COUNT - 1 - to) + ' weitere Level)', 'dim'); }
     print('');
-    print('Starte mit "level <nummer>". Hilfe: "hilfe".', 'dim');
+    print(all ? 'Starte mit "level <nummer>". Hilfe: "hilfe".' : 'Tippe unten ein Level an, oder gib "level <nummer>" ein. Alle Level als Liste: "menu alle". Hilfe: "hilfe".', 'dim');
   }
 
   function showHelp() {
