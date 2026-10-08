@@ -2772,6 +2772,33 @@ form { display: flex; align-items: center; gap: 8px; }
     } catch (e) { /* Speichern nicht möglich, das Spiel läuft trotzdem */ }
   }
 
+  /* Spielstand als kurzer Code: GS1-<Hex der gelösten Level>-<Prüfsumme> */
+  function buildCode() {
+    var hex = '';
+    for (var i = 0; i < LEVEL_COUNT; i += 4) {
+      var v = 0;
+      for (var k = 0; k < 4; k++) { if (state.solved[i + k]) { v |= 8 >> k; } }
+      hex += v.toString(16).toUpperCase();
+    }
+    var all = hex + ghostHash('GS1' + hex).slice(0, 4).toUpperCase();
+    return 'GS1-' + all.match(/.{1,4}/g).join('-');
+  }
+
+  function parseCode(raw) {
+    var c = String(raw).toUpperCase().replace(/[^0-9A-Z]/g, '');
+    if (c.indexOf('GS1') !== 0) { return { error: 'Der Code beginnt nicht mit GS1.' }; }
+    c = c.slice(3);
+    if (c.length < 5 || !/^[0-9A-F]+$/.test(c)) { return { error: 'Der Code enthält ungültige Zeichen oder ist zu kurz.' }; }
+    var hex = c.slice(0, -4), check = c.slice(-4);
+    if (ghostHash('GS1' + hex).slice(0, 4).toUpperCase() !== check) { return { error: 'Die Prüfsumme stimmt nicht. Vertippt? Prüfe den Code noch einmal.' }; }
+    var solved = [];
+    for (var i = 0; i < LEVEL_COUNT; i++) {
+      var d = hex.charAt(Math.floor(i / 4));
+      solved.push(d ? ((parseInt(d, 16) & (8 >> (i % 4))) !== 0) : false);
+    }
+    return { solved: solved };
+  }
+
   function clearProgress() {
     try { window.localStorage.removeItem(STORE_KEY); } catch (e) { /* ignorieren */ }
   }
@@ -2989,6 +3016,8 @@ form { display: flex; align-items: center; gap: 8px; }
         { c: 'level ' + (next || 1) },
         { c: 'level ', fill: true },
         { c: 'status' },
+        { c: 'export' },
+        { c: 'import ', fill: true },
         { c: 'hilfe' }
       ];
     }
@@ -3131,6 +3160,8 @@ form { display: flex; align-items: center; gap: 8px; }
       'hinweis .......... Tipp zur aktuellen Mission',
       'status ........... Fortschritt anzeigen',
       'sound an|aus ..... Ton ein- oder ausschalten',
+      'export ........... Spielstand als Code sichern',
+      'import <code> .... Spielstand aus Code laden',
       'clear ............ Bildschirm leeren',
       'reset ............ Spielstand löschen'
     ]);
@@ -3811,6 +3842,26 @@ form { display: flex; align-items: center; gap: 8px; }
       case 'level': case 'lvl': startLevel(parseInt(arg, 10)); break;
       case 'hinweis': case 'tipp': case 'hint': showHint(); break;
       case 'status': showStatus(); break;
+      case 'export':
+        var code = buildCode();
+        print('Dein Spielstand-Code (' + state.solved.filter(Boolean).length + '/' + LEVEL_COUNT + ' gelöst):', 'info');
+        print(code, 'cipher');
+        print('Auf einem anderen Gerät oder Browser gibst du ein: import ' + code, 'dim');
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(function () { print('In die Zwischenablage kopiert.', 'dim'); }, function () { /* nicht erlaubt: Code lässt sich auch markieren */ });
+          }
+        } catch (e) { /* ignorieren */ }
+        break;
+      case 'import':
+        if (!arg) { print('Benutzung: import <code>   (den Code erhältst du mit "export")', 'warn'); break; }
+        var res = parseCode(arg);
+        if (res.error) { print(res.error, 'err'); break; }
+        var before = state.solved.filter(Boolean).length;
+        state.solved = state.solved.map(function (v, i) { return v || res.solved[i]; });
+        saveProgress();
+        print('Spielstand übernommen: ' + state.solved.filter(Boolean).length + '/' + LEVEL_COUNT + ' gelöst (vorher ' + before + ').', 'ok');
+        break;
       case 'sound':
         if (norm(arg) === 'an' || norm(arg) === 'ein') { setSound(true); print('Sound an.', 'dim'); }
         else if (norm(arg) === 'aus') { setSound(false); print('Sound aus.', 'dim'); }

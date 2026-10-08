@@ -67,11 +67,13 @@ Wichtige Befehle (mit `hilfe` siehst du immer alle):
 - `hinweis` – Tipp zur aktuellen Mission (mehrstufig)
 - `status` – Fortschritt anzeigen
 - `sound an|aus` – Ton ein- oder ausschalten (oder oben rechts auf den Knopf tippen)
+- `export` – Spielstand als kurzen Code anzeigen (und in die Zwischenablage kopieren)
+- `import <code>` – Spielstand aus einem Code laden (bestehender Fortschritt bleibt erhalten)
 - `reset` – Spielstand löschen
 
 Die Klänge werden live im Browser erzeugt (Web Audio API), es gibt keine Audiodateien. In Level 9 kannst du das Morsesignal mit `abspielen` auch anhören.
 
-Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine Daten an einen Server gesendet.
+Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine Daten an einen Server gesendet. Zum Mitnehmen auf ein anderes Gerät oder zur Sicherung gibt es `export` und `import`.
 
 **Spoiler-Hinweis:** Das Spiel ist eine einzelne Datei. Die Lösungen stehen im Quelltext – wer selbst rätseln will, schaut nicht hinein.
 
