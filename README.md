@@ -7,7 +7,7 @@ Alles ist **rein fiktiv**: erfundene Server, erfundene Personen, keine echten Ex
 
 ## Spielen
 
-**[https://magnethelm90.github.io/Gametesr](https://magnethelm90.github.io/Gametesr)**
+**[https://magnethelm90.github.io/ghost-shell](https://magnethelm90.github.io/ghost-shell)**
 
 Oder lokal: Datei `index.html` herunterladen und im Browser öffnen. Es gibt keine Abhängigkeiten und keinen Build-Schritt.
 
@@ -81,7 +81,7 @@ Dein Fortschritt wird im Browser (`localStorage`) gespeichert. Es werden keine D
 - Eingaben werden nur als Text angezeigt (`textContent`), nie als HTML.
 - Der gespeicherte Spielstand (`localStorage`) wird beim Laden geprüft. Defekte oder manipulierte Daten werden ignoriert.
 - Alle Namen, Passwörter und Zugangsdaten im Spiel sind frei erfunden.
-- Sicherheitslücke gefunden? Bitte als [Issue](https://github.com/Magnethelm90/Gametesr/issues) melden.
+- Sicherheitslücke gefunden? Bitte als [Issue](https://github.com/Magnethelm90/ghost-shell/issues) melden.
 
 ## Projektstruktur
 
