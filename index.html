@@ -247,18 +247,21 @@ form { display: flex; align-items: center; gap: 8px; }
   .cell.mode { height: 34px; }
   .cell.pad { height: 38px; }
 }
-/* Querformat auf dem Handy: Text links, Spielfeld und Knöpfe rechts */
+/* Querformat auf dem Handy: Text links, Knöpfe und Spielfeld rechts */
 @media (orientation: landscape) and (max-height: 540px) {
   body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 42%); grid-template-rows: auto auto minmax(0, 1fr) auto; }
-  header { grid-column: 1 / -1; grid-row: 1; padding: 4px 14px; }
+  header { grid-column: 1 / -1; grid-row: 1; padding: 2px 14px; }
+  .sndbtn { min-height: 32px; }
   .goal { grid-column: 1 / -1; grid-row: 2; padding: 4px 14px; font-size: 12px; }
   #out { grid-column: 1; grid-row: 3; min-height: 0; }
-  #side { grid-column: 2; grid-row: 3; max-height: none; min-height: 0; overflow: auto; border-top: 0; border-left: 1px solid var(--line); }
-  #panel { --cell: 34px; padding: 6px 8px; max-height: none; overflow: visible; flex: 0 0 auto; }
-  #chips { flex-wrap: wrap; overflow: visible; }
-  .chip { min-height: 40px; padding: 0 12px; }
-  footer { grid-column: 1 / -1; grid-row: 4; padding: 6px 10px 8px; }
-  #in, #go { min-height: 42px; }
+  #side { grid-column: 2; grid-row: 3; max-height: none; min-height: 0; overflow: hidden; border-top: 0; border-left: 1px solid var(--line); }
+  #chips { order: -1; padding: 6px 8px; gap: 6px; }
+  .chip { min-height: 36px; padding: 0 12px; font-size: 13px; }
+  #panel { --cell: 30px; flex: 1 1 auto; min-height: 0; max-height: none; overflow: auto; padding: 4px 8px; }
+  .cell.mode { height: 30px; }
+  .cell.pad { height: 34px; }
+  footer { grid-column: 1 / -1; grid-row: 4; padding: 4px 10px 6px; }
+  #in, #go { min-height: 40px; }
 }
 @media (min-width: 700px) and (min-height: 541px) {
   body { font-size: 16px; }
